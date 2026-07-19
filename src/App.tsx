@@ -6,12 +6,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Chit } from "./types";
-import { DEFAULT_CHITS, SINGLE_FILE_HTML_TEMPLATE } from "./data";
-
-// ==========================================
-// 1. 全域配置區 (Global Configuration)
-// ==========================================
-const SPREADSHEET_ID = "YOUR_GOOGLE_SHEET_ID_HERE";
+import { DEFAULT_CHITS } from "./data";
 
 interface ScrollData {
   id: number;
@@ -41,8 +36,7 @@ const BuddhaIcon = () => (
 );
 
 export default function App() {
-  const [sheetId, setSheetId] = useState<string>(SPREADSHEET_ID);
-  const [chits, setChits] = useState<Chit[]>(DEFAULT_CHITS);
+  const [chits] = useState<Chit[]>(DEFAULT_CHITS);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
   const [luckyScrollFlying, setLuckyScrollFlying] = useState<boolean>(false);
@@ -50,9 +44,6 @@ export default function App() {
   const [selectedChit, setSelectedChit] = useState<Chit | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isScrollUnrolled, setIsScrollUnrolled] = useState<boolean>(false);
-  const [showExporter, setShowExporter] = useState<boolean>(false);
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [loadingStatus, setLoadingStatus] = useState<string>("using_fallback");
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; vx: number; vy: number; scale: number; delay: number }>>([]);
 
   // ==========================================
@@ -226,52 +217,7 @@ export default function App() {
     }
   };
 
-  // ==========================================
-  // 4. Sheets 資料載入 (Google Sheets Integration)
-  // ==========================================
-  useEffect(() => {
-    const fetchSheetsData = async () => {
-      if (!sheetId || sheetId === "YOUR_GOOGLE_SHEET_ID_HERE" || sheetId.trim() === "") {
-        setChits(DEFAULT_CHITS);
-        setLoadingStatus("using_fallback");
-        return;
-      }
 
-      setLoadingStatus("loading");
-      const url = `https://opensheet.elk.sh/${sheetId}/工作表1`;
-      
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
-        }
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          const parsed = data.map((item: any, idx: number) => {
-            const fallbackMatch = DEFAULT_CHITS[idx % DEFAULT_CHITS.length];
-            return {
-              id: item.id || String(idx + 1),
-              image_url: item.image_url || fallbackMatch.image_url,
-              french: item.french || fallbackMatch.french,
-              chinese: item.chinese || fallbackMatch.chinese,
-              interpretation: item.interpretation || fallbackMatch.interpretation,
-            };
-          });
-          setChits(parsed);
-          setLoadingStatus("success");
-        } else {
-          throw new Error("試算表回傳格式錯誤或無資料");
-        }
-      } catch (err) {
-        console.warn("⚠️ Google Sheets 讀取失敗，降級為內建資料:", err);
-        setChits(DEFAULT_CHITS);
-        setLoadingStatus("error_fallback");
-      }
-    };
-
-    fetchSheetsData();
-  }, [sheetId]);
 
   // ==========================================
   // 5. 抽籤互動邏輯 (Draw Animation)
@@ -343,24 +289,7 @@ export default function App() {
     }, 850); // 等待合攏的 0.85s CSS 動畫完成後再徹底關閉背景
   };
 
-  // ==========================================
-  // 6. 單檔匯出 HTML 代碼複製
-  // ==========================================
-  const handleCopyCode = () => {
-    const customizedCode = SINGLE_FILE_HTML_TEMPLATE.replace(
-      "const SPREADSHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';",
-      `const SPREADSHEET_ID = '${sheetId || "YOUR_GOOGLE_SHEET_ID_HERE"}';`
-    );
-    
-    navigator.clipboard.writeText(customizedCode)
-      .then(() => {
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      })
-      .catch((err) => {
-        console.error("無法複製:", err);
-      });
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#140c0a] via-[#2d1b10] to-[#140c0a] flex flex-col items-center justify-center p-4 md:p-8 font-sans text-[#EAE3DB] relative selection:bg-amber-500/20 selection:text-white overflow-x-hidden">
@@ -412,15 +341,6 @@ export default function App() {
         >
           <i className={`fa-solid ${isMuted ? "fa-volume-xmark" : "fa-volume-high"} text-xs`}></i>
         </button>
-
-        <button
-          id="export-btn"
-          onClick={() => setShowExporter(true)}
-          className="w-8 h-8 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300"
-          title="單檔下載 / 複製"
-        >
-          <i className="fa-solid fa-file-code text-xs"></i>
-        </button>
       </div>
 
       {/* 居中神聖案几容器 (Main Altar Stage) */}
@@ -439,24 +359,12 @@ export default function App() {
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-52 h-4 bg-black/50 rounded-full blur-[10px] z-0 pointer-events-none transition-transform duration-300 group-hover:scale-105"></div>
 
             {/* 圓形斜口玻璃球外框 (Crystal Clear Glass Sphere - NOT FROSTED) */}
-            <motion.div
+            <div
               id="glass-sphere"
-              variants={{
-                idle: { rotate: 0, x: 0, y: 0 },
-                shaking: {
-                  rotate: [0, -8, 8, -6, 6, -4, 4, -2, 2, 0],
-                  x: [0, -4, 4, -3, 3, -2, 2, -1, 1, 0],
-                  y: [0, 2, -2, 1.5, -1.5, 1, -1, 0.5, -0.5, 0],
-                  transition: { duration: 0.6, ease: "easeInOut" }
-                }
-              }}
-              animate={isShaking ? "shaking" : "idle"}
-              className={`absolute bottom-10 w-64 h-36 rounded-b-[128px] rounded-t-none border-b border-l border-r border-white/25 bg-gradient-to-b from-transparent via-white/5 to-white/10 shadow-[inset_0_-20px_40px_rgba(0,0,0,0.75),_0_20px_40px_rgba(0,0,0,0.6)] overflow-hidden z-20 flex items-center justify-center transition-all duration-300 ${
-                isShaking ? "is-shaking-globe" : "group-hover:border-white/40 group-hover:shadow-[inset_0_-20px_45px_rgba(255,255,255,0.15),_0_25px_50px_rgba(212,163,115,0.15)]"
-              }`}
+              className="absolute bottom-10 w-64 h-36 rounded-b-[128px] rounded-t-none border-b border-l border-r border-white/25 bg-gradient-to-b from-transparent via-white/5 to-white/10 shadow-[inset_0_-20px_40px_rgba(0,0,0,0.75),_0_20px_40px_rgba(0,0,0,0.6)] overflow-hidden z-20 flex items-center justify-center transition-all duration-300 group-hover:border-white/40 group-hover:shadow-[inset_0_-20px_45px_rgba(255,255,255,0.15),_0_25px_50px_rgba(212,163,115,0.15)]"
             >
               {/* 數百個 (堆疊 92 個) 精緻粉白相間紙捲軸 (Scrolls Pile - 92 Scrolls) */}
-              <div className="absolute inset-0 z-10 pointer-events-none">
+              <div className={`absolute inset-0 z-10 pointer-events-none transition-all duration-300 ${isShaking ? "is-shaking-pool" : ""}`}>
                 {scrollsPile.map((sc) => {
                   const leftPos = 128 + sc.x - 16;
                   const topPos = sc.y - 6;
@@ -529,13 +437,13 @@ export default function App() {
               <div className="absolute inset-0 glass-specular-highlight pointer-events-none z-30 opacity-70"></div>
               <div className="absolute top-4 left-6 w-14 h-6 bg-white/25 rounded-full rotate-[-30deg] blur-[1px] pointer-events-none z-30"></div>
               <div className="absolute bottom-6 right-8 w-10 h-4 bg-white/5 rounded-full rotate-[-30deg] blur-[2px] pointer-events-none z-30"></div>
-            </motion.div>
+            </div>
 
             {/* 🌟 3D 橢圓立體瓶口：立體斜切橢圓 (Sibling of glass sphere to avoid overflow clipping) */}
             <div className="bowl-opening"></div>
 
             {/* 中央佛陀水晶： nestled in the scrolls pile, translucent pale pink crystal seated Buddha */}
-            <div className="absolute left-[calc(50%-20px)] top-[172px] z-28 pointer-events-none select-none transition-transform duration-300 group-hover:scale-105">
+            <div className={`absolute left-[calc(50%-20px)] top-[172px] z-28 pointer-events-none select-none transition-transform duration-300 group-hover:scale-105 ${isShaking ? "is-shaking-pool" : ""}`}>
               <svg viewBox="0 0 60 70" className="w-10 h-12 drop-shadow-[0_4px_8px_rgba(255,182,193,0.65)]">
                 <defs>
                   <radialGradient id="crystal-pink-buddha" cx="50%" cy="40%" r="50%">
@@ -716,12 +624,18 @@ export default function App() {
                   </div>
 
                   {/* 宣紙中的 2D 圖片 (帶有精緻古典邊框與宣紙背景襯托) */}
-                  <div className="flex-1 flex items-center justify-center my-2 max-h-[190px] overflow-hidden rounded-xl border-2 border-[#bd9a7a]/20 bg-[#faf5e6] shadow-md relative p-1">
+                  <div 
+                    className="flex-1 flex items-center justify-center my-2 overflow-hidden rounded-xl border-2 border-[#bd9a7a]/20 bg-[#faf5e6] shadow-md relative p-1.5 w-full mx-auto"
+                    style={{ 
+                      aspectRatio: '1375 / 1144',
+                      maxHeight: 'min(420px, 48vh)'
+                    }}
+                  >
                     <img
                       id="result-image"
                       src={selectedChit.image_url}
                       alt="Zen Wisdom"
-                      className="max-h-[176px] w-auto max-w-full object-contain rounded-lg select-none"
+                      className="w-full h-full object-cover rounded-lg select-none"
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute top-2 right-3 text-[8px] tracking-widest uppercase opacity-40 font-mono text-amber-900">
@@ -765,86 +679,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-          8. 複製單檔 HTML 彈窗 (Exporter UI)
-         ========================================== */}
-      <AnimatePresence>
-        {showExporter && (
-          <motion.div
-            id="exporter-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowExporter(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-[3px] z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              id="exporter-window"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[#211613] text-[#EAE3DB] rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-3xl border border-white/10 flex flex-col h-[550px] relative"
-            >
-              <button
-                id="exporter-close"
-                onClick={() => setShowExporter(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full border border-white/10 hover:bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
 
-              <h3 className="text-lg font-serif font-medium text-white mb-2 flex items-center space-x-2">
-                <i className="fa-solid fa-file-code text-amber-400"></i>
-                <span>複製單一檔案 Web App 程式碼</span>
-              </h3>
-              
-              <p className="text-xs text-[#EAE3DB]/60 mb-4 leading-relaxed">
-                這是為您客製化封裝的獨立單網頁 HTML 檔案。它內含全新升級的【玻璃圓球籤筒】、極美 3D 動態與音效。您可以點擊一鍵複製，將其存為 <code>index.html</code> 即可在瀏覽器中完全離線與本地端流暢執行！
-              </p>
-
-              {/* 預覽區域 */}
-              <div className="flex-1 bg-black/40 rounded-2xl p-4 overflow-auto font-mono text-[11px] text-amber-300/90 mb-6 border border-white/5 relative">
-                <pre>{SINGLE_FILE_HTML_TEMPLATE}</pre>
-              </div>
-
-              {/* 試算表設定 */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="w-full sm:w-auto flex-1 flex flex-col">
-                  <label className="text-[10px] font-sans font-medium text-amber-200/40 uppercase tracking-widest mb-1">
-                    當前 Google Sheet 試算表 ID：
-                  </label>
-                  <input
-                    type="text"
-                    value={sheetId === "YOUR_GOOGLE_SHEET_ID_HERE" ? "" : sheetId}
-                    onChange={(e) => {
-                      const val = e.target.value.trim();
-                      setSheetId(val === "" ? "YOUR_GOOGLE_SHEET_ID_HERE" : val);
-                    }}
-                    placeholder="請輸入 Google 試算表 ID..."
-                    className="w-full text-xs bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-[#EAE3DB] focus:outline-none focus:border-amber-400 placeholder-white/20"
-                  />
-                </div>
-
-                <div className="w-full sm:w-auto flex">
-                  <button
-                    id="copy-code-btn"
-                    onClick={handleCopyCode}
-                    className={`w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-semibold tracking-widest transition-all duration-300 shadow-lg ${
-                      isCopied 
-                        ? "bg-emerald-600 text-white" 
-                        : "bg-gradient-to-r from-amber-500 to-yellow-600 text-neutral-900 hover:brightness-110"
-                    }`}
-                  >
-                    <i className={`fa-solid ${isCopied ? "fa-circle-check" : "fa-copy"} mr-1.5`}></i>
-                    {isCopied ? "已成功複製！" : "一鍵複製程式碼"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* 底部極簡裝飾 (Decorative Zen Footer) */}
       <footer className="mt-8 w-full max-w-2xl flex justify-between items-center px-4 z-10 text-white/30 text-[9px] tracking-widest uppercase">
@@ -859,21 +694,7 @@ export default function App() {
         <span>Propulsé par la Sérénité</span>
       </footer>
 
-      {/* 設定提示 (Details section) */}
-      <div id="advanced-config-panel" className="mt-4 z-10 w-full max-w-sm bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/5 flex flex-col items-center">
-        <details className="w-full group">
-          <summary className="text-[11px] font-sans text-white/40 group-open:text-amber-400 cursor-pointer text-center select-none font-medium uppercase tracking-widest list-none flex items-center justify-center space-x-1">
-            <span>⚙️ 串接您的 Google Sheets</span>
-            <i className="fa-solid fa-chevron-down text-[9px] group-open:rotate-180 transition-transform duration-300"></i>
-          </summary>
-          <div className="mt-3 flex flex-col space-y-2">
-            <p className="text-[10px] text-[#EAE3DB]/50 leading-normal">
-              1. 點擊右上角<b>「單檔下載/複製」</b>按鈕，在彈窗下方輸入您的 Google Sheets ID，系統將為您生成對應代碼。<br />
-              2. 試算表的第一張工作表應命名為「<b>工作表1</b>」，並請點擊右上方「共用」，權限設為「<b>知道連結的使用者僅限檢視</b>」。
-            </p>
-          </div>
-        </details>
-      </div>
+
 
     </div>
   );

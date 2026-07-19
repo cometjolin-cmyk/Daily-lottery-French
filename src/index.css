@@ -35,6 +35,18 @@
   animation: scrollJiggle 0.3s ease-in-out infinite;
 }
 
+/* --- 1.1 內部捲軸池與佛陀高頻抖動動畫 --- */
+@keyframes poolShake {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: translate3d(-3.5px, -2.5px, 0) rotate(-2deg); }
+  20%, 40%, 60%, 80% { transform: translate3d(3.5px, 1.5px, 0) rotate(2deg); }
+}
+
+.is-shaking-pool {
+  animation: poolShake 1.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
 /* --- 2. 玻璃球體漸層反射、亮斑與高質感亮面 --- */
 .glass-reflection {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 40%, transparent 60%);
@@ -120,7 +132,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 520px;
+  height: min(720px, 90vh);
   width: 50px; /* 初始寬度僅兩根軸的寬度 */
   transition: width 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: visible;
@@ -129,14 +141,14 @@
 
 /* 當啟動打開特效時，容器撐開 */
 .scroll-container.unrolled {
-  width: 460px; /* 拉開後的寬度 */
+  width: min(520px, 92vw); /* 拉開後的寬度 */
 }
 
 /* 左右兩根古典木軸心 */
 .scroll-rod {
   position: absolute;
   width: 20px;
-  height: 560px;
+  height: min(760px, 94vh);
   background: linear-gradient(to right, #1d0f0d, #4d1d15, #1d0f0d);
   border-radius: 4px;
   box-shadow: 2px 6px 18px rgba(0, 0, 0, 0.7);
@@ -172,7 +184,7 @@
   position: absolute;
   left: 8px;
   right: 8px;
-  height: 480px;
+  height: min(680px, 86vh);
   background: #fdf8eb;
   background-image: 
     radial-gradient(rgba(139, 90, 43, 0.08) 1.5px, transparent 1.5px),
