@@ -1,0 +1,6 @@
+{
+  "name": "每日法語抽籤系統",
+  "description": "一個寧靜、療癒的「人生卜筮系統」，帶有優雅的禪意極簡設計、搖晃籤筒音效、突起籤條與高質感磨砂玻璃彈窗。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
