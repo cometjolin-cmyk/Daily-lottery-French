@@ -1,6 +1,6 @@
 {
-  "name": "每日法語抽籤系統",
-  "description": "一個寧靜、療癒的「人生卜筮系統」，帶有優雅的禪意極簡設計、搖晃籤筒音效、突起籤條與高質感磨砂玻璃彈窗。",
+  "name": "星雲大師 — 人間法語",
+  "description": "一個莊嚴寧靜的「星雲大師人間法語」抽籤系統，帶有背景圖片預載優化、自動排版防跳動，並支持 HTML5 Canvas 一鍵導出與保存精緻法語分享卡。",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -37,6 +37,7 @@ const BuddhaIcon = () => (
 
 export default function App() {
   const [chits] = useState<Chit[]>(DEFAULT_CHITS);
+  const [lang, setLang] = useState<"zh" | "en">("zh");
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
   const [luckyScrollFlying, setLuckyScrollFlying] = useState<boolean>(false);
@@ -44,6 +45,8 @@ export default function App() {
   const [selectedChit, setSelectedChit] = useState<Chit | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isScrollUnrolled, setIsScrollUnrolled] = useState<boolean>(false);
+  const [isPreloading, setIsPreloading] = useState<boolean>(false);
+  const [isGeneratingCard, setIsGeneratingCard] = useState<boolean>(false);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; vx: number; vy: number; scale: number; delay: number }>>([]);
 
   // ==========================================
@@ -223,7 +226,54 @@ export default function App() {
   // 5. 抽籤互動邏輯 (Draw Animation)
   // ==========================================
   const handleDraw = () => {
-    if (isShaking || showModal || luckyScrollFlying) return;
+    if (isShaking || showModal || luckyScrollFlying || isPreloading) return;
+    
+    // 立即隨機選擇一個法語 (Chit)，以極大化背景非同步預載時間
+    const luckyChit = chits[Math.floor(Math.random() * chits.length)];
+    setIsPreloading(true);
+
+    // 建立新圖片物件並在背景非同步載入 (Preload)
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    let isImgLoaded = false;
+    let isFlightFinished = false;
+
+    const triggerReveal = () => {
+      setIsPreloading(false);
+      setLuckyScrollFlying(false);
+      setParticles([]);
+      setSelectedChit(luckyChit);
+      setShowModal(true);
+      setIsScrollUnrolled(false); // 確保開頭為收攏狀態
+      playZenReveal();
+
+      // 隨後 120 毫秒平滑雙向推開轉軸，撐開宣紙
+      setTimeout(() => {
+        setIsScrollUnrolled(true);
+      }, 120);
+    };
+
+    const checkAndReveal = () => {
+      if (isImgLoaded && isFlightFinished) {
+        triggerReveal();
+      }
+    };
+
+    img.onload = () => {
+      isImgLoaded = true;
+      checkAndReveal();
+    };
+
+    img.onerror = () => {
+      // 容錯防呆：如果圖片讀取失敗，依然要彈出以防介面卡死
+      console.warn("Failed to preload image:", luckyChit.image_url);
+      isImgLoaded = true;
+      checkAndReveal();
+    };
+
+    // 觸發請求
+    img.src = luckyChit.image_url;
     
     // A. 階段 1：劇烈左右搖擺，筒內 90 個粉白捲軸同步高頻抖動
     setIsShaking(true);
@@ -260,20 +310,10 @@ export default function App() {
       }
       setParticles(pList);
 
-      // C. 階段 3：幻化 (3D Morph)
+      // C. 階段 3：等待飛升動畫完畢且圖片載入完畢後，才進行幻化與揭示
       setTimeout(() => {
-        setLuckyScrollFlying(false);
-        setParticles([]);
-        const luckyChit = chits[Math.floor(Math.random() * chits.length)];
-        setSelectedChit(luckyChit);
-        setShowModal(true);
-        setIsScrollUnrolled(false); // 確保開頭為收攏狀態
-        playZenReveal();
-
-        // 隨後 120 毫秒平滑雙向推開轉軸，撐開宣紙
-        setTimeout(() => {
-          setIsScrollUnrolled(true);
-        }, 120);
+        isFlightFinished = true;
+        checkAndReveal();
       }, 850);
 
     }, 1200);
@@ -287,6 +327,280 @@ export default function App() {
         setSelectedChit(null);
       }, 400);
     }, 850); // 等待合攏的 0.85s CSS 動畫完成後再徹底關閉背景
+  };
+
+  // ==========================================
+  // 6. 新增「保存法語卡片」一鍵下載分享功能 (HTML5 Canvas)
+  // ==========================================
+  const handleSaveCard = async () => {
+    if (!selectedChit || isGeneratingCard) return;
+    setIsGeneratingCard(true);
+
+    try {
+      // 1. 創建高解析度畫布 (適合社群分享或手機保存，長寬比為 9:16)
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("無法取得 Canvas 2D Context");
+
+      // 2. 繪製精緻宣紙/米白漸層背景
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920);
+      bgGrad.addColorStop(0, "#fdfbf7");
+      bgGrad.addColorStop(0.5, "#faf5e6");
+      bgGrad.addColorStop(1, "#f5ebd0");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      // 3. 繪製精緻古典花紋邊框 (金邊與深紅線條結合，莊嚴肅穆)
+      ctx.strokeStyle = "#c5a059"; // 黃金漆色
+      ctx.lineWidth = 14;
+      ctx.strokeRect(35, 35, 1080 - 70, 1920 - 70);
+
+      ctx.strokeStyle = "#8d6e63"; // 典雅紅褐色線條
+      ctx.lineWidth = 3;
+      ctx.strokeRect(55, 55, 1080 - 110, 1920 - 110);
+
+      // 四個角落的中式祥瑞古典角花飾
+      const drawCorner = (x: number, y: number, xDir: number, yDir: number) => {
+        ctx.strokeStyle = "#c5a059";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(x, y + yDir * 55);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x + xDir * 55, y);
+        ctx.stroke();
+      };
+      drawCorner(65, 65, 1, 1);
+      drawCorner(1080 - 65, 65, -1, 1);
+      drawCorner(65, 1920 - 65, 1, -1);
+      drawCorner(1080 - 65, 1920 - 65, -1, -1);
+
+      // 4. 上方：書寫大師與主題資訊
+      ctx.fillStyle = "#3e2723";
+      ctx.textAlign = "center";
+      
+      if (lang === "zh") {
+        // 標題：「佛光山開山祖師星雲大師」
+        ctx.font = "bold 32px 'Noto Serif TC', 'PingFang TC', 'STSong', 'SimSun', serif";
+        ctx.fillText("佛光山開山祖師星雲大師", 540, 130);
+      } else {
+        // Title: "Venerable Master Hsing Yun"
+        ctx.font = "bold 30px 'Noto Serif TC', 'Playfair Display', serif";
+        ctx.fillText("Venerable Master Hsing Yun", 540, 130);
+      }
+
+      // 裝飾分界金線
+      ctx.strokeStyle = "#c5a059";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(410, 165);
+      ctx.lineTo(670, 165);
+      ctx.stroke();
+
+      // 副標題：「人間法語」
+      ctx.fillStyle = "#a16b1a";
+      ctx.font = "26px 'Noto Serif TC', 'PingFang TC', serif";
+      ctx.fillText(lang === "zh" ? "• 人間法語 •" : "• Dharma Words for the Human World •", 540, 205);
+
+      // 5. 繪製中央大師法語圖片
+      const drawImageOnCanvas = () => {
+        return new Promise<void>((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            // 繪製圖片框白底與立體陰影效果
+            ctx.fillStyle = "#fcf9f2";
+            ctx.shadowColor = "rgba(139, 90, 43, 0.12)";
+            ctx.shadowBlur = 35;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 15;
+            ctx.fillRect(85, 255, 910, 760);
+            ctx.shadowColor = "transparent"; // 重置陰影設定以免影響文字
+
+            // 繪製法語主圖 (寬 900, 高 750, 置中於 x=90, y=260)
+            ctx.drawImage(img, 90, 260, 900, 750);
+
+            // 繪製精緻的木色內襯細框
+            ctx.strokeStyle = "#bd9a7a";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(88, 258, 904, 754);
+            resolve();
+          };
+          img.onerror = (err) => {
+            console.warn("無法加載法語圖片至 Canvas (CORS/離線)，將顯示古典藝術蓮花插圖：", err);
+            // 降級方案：即使圖片受 CORS 影響，依然產生絕美法語卡
+            ctx.fillStyle = "#fcf9f2";
+            ctx.fillRect(90, 260, 900, 750);
+            ctx.strokeStyle = "#bd9a7a";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(88, 258, 904, 754);
+            
+            // 畫一朵具有禪意的金色蓮花圖騰/卍字
+            ctx.fillStyle = "#c5a059";
+            ctx.font = "180px 'Noto Serif TC', serif";
+            ctx.fillText("卍", 540, 640);
+            ctx.font = "26px 'Noto Serif TC', serif";
+            ctx.fillStyle = "#8d6e63";
+            ctx.fillText(lang === "zh" ? "（ 萬德莊嚴 • 藏於心田 ）" : "（ Wisdom & Compassion in the Heart ）", 540, 720);
+            resolve();
+          };
+          img.src = selectedChit.image_url;
+        });
+      };
+
+      await drawImageOnCanvas();
+
+      // 6. 繪製精緻的中英法文字與開示 (配合自動換行演算法)
+      const wrapText = (
+        text: string,
+        startX: number,
+        startY: number,
+        maxWidth: number,
+        lineHeight: number,
+        fontStyle: string,
+        colorStyle: string
+      ) => {
+        ctx.font = fontStyle;
+        ctx.fillStyle = colorStyle;
+        const isWestern = /[a-zA-Z]/.test(text);
+        const tokens = isWestern ? text.split(' ') : text.split('');
+        
+        let line = '';
+        let currentY = startY;
+        
+        for (let n = 0; n < tokens.length; n++) {
+          const testLine = line + tokens[n] + (isWestern ? ' ' : '');
+          const metrics = ctx.measureText(testLine);
+          const testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, startX, currentY);
+            line = tokens[n] + (isWestern ? ' ' : '');
+            currentY += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, startX, currentY);
+        return currentY;
+      };
+
+      let lastTextY = 1090;
+
+      if (lang === "zh") {
+        // 6a. 經典中文字：法語內容 (字體更大、穩重典雅)
+        const endChY = wrapText(
+          selectedChit.chinese || "",
+          540,
+          1095,
+          880,
+          65,
+          "bold 46px 'Noto Serif TC', 'PingFang TC', 'STSong', 'SimSun', serif",
+          "#3e2723"
+        );
+
+        // 6b. 精緻法文/英文翻譯
+        lastTextY = wrapText(
+          selectedChit.french ? `"${selectedChit.french}"` : "",
+          540,
+          endChY + 70,
+          840,
+          45,
+          "italic 30px 'Georgia', 'Times New Roman', serif",
+          "#5d4037"
+        );
+      } else {
+        // 6a. 英/法文法語內容優先 (更大、更典雅)
+        const endEnY = wrapText(
+          selectedChit.french ? `"${selectedChit.french}"` : "",
+          540,
+          1090,
+          840,
+          50,
+          "bold italic 36px 'Georgia', 'Times New Roman', serif",
+          "#3e2723"
+        );
+
+        // 6b. 經典中文字：副標題
+        lastTextY = wrapText(
+          selectedChit.chinese || "",
+          540,
+          endEnY + 65,
+          880,
+          55,
+          "bold 32px 'Noto Serif TC', 'PingFang TC', serif",
+          "#6d4c41"
+        );
+      }
+
+      // 裝飾性淡墨分界線
+      ctx.strokeStyle = "rgba(189, 154, 122, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(340, lastTextY + 45);
+      ctx.lineTo(740, lastTextY + 45);
+      ctx.stroke();
+
+      // 6c. 今日開示 (Interpretation)
+      const interpTitleY = lastTextY + 95;
+      ctx.font = "bold 26px 'Noto Serif TC', 'PingFang TC', serif";
+      ctx.fillStyle = "#8d6e63";
+      ctx.fillText(lang === "zh" ? "【 今日開示 】" : "【 Daily Guidance 】", 540, interpTitleY);
+
+      const interpY = interpTitleY + 50;
+      const endInterpY = wrapText(
+        selectedChit.interpretation || "",
+        540,
+        interpY,
+        820,
+        40,
+        "24px 'Inter', 'Noto Sans TC', sans-serif",
+        "#5c4a40"
+      );
+
+      // 6d. 統一規範的出處：— 佛光山開山祖師 星雲大師
+      const attrY = endInterpY + 75;
+      ctx.font = "bold 28px 'Noto Serif TC', 'PingFang TC', serif";
+      ctx.fillStyle = "#795548";
+      ctx.fillText(
+        lang === "zh" ? "— 佛光山開山祖師 星雲大師" : "— Venerable Master Hsing Yun, Founder of Fo Guang Shan",
+        540,
+        attrY
+      );
+
+      // 7. 右下角：印章「佛光人間」(120x120 仿實體篆刻印章)
+      const sealX = 860;
+      const sealY = 1710;
+      ctx.fillStyle = "#b71c1c"; // 大紅硃砂色
+      ctx.fillRect(sealX, sealY, 120, 120);
+      
+      // 繪製印章黃色框邊
+      ctx.strokeStyle = "#fff9c4";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(sealX + 8, sealY + 8, 104, 104);
+
+      // 篆刻文字
+      ctx.fillStyle = "#fff9c4";
+      ctx.font = "bold 24px 'Noto Serif TC', 'PingFang TC', serif";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.fillText("佛光", sealX + 60, sealY + 38);
+      ctx.fillText("人間", sealX + 60, sealY + 82);
+
+      // 8. 觸發自動瀏覽器圖片下載
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      link.download = `Dharma_Words_${dateStr}_${selectedChit.id}.png`;
+      link.href = dataUrl;
+      link.click();
+
+    } catch (err) {
+      console.error("Canvas card generation failed:", err);
+      alert("圖卡下載失敗，請直接長按螢幕截圖保存法語。");
+    } finally {
+      setIsGeneratingCard(false);
+    }
   };
 
 
@@ -333,6 +647,16 @@ export default function App() {
 
       {/* 右上角低調按鈕組 (Utility Controls) */}
       <div className="absolute top-4 right-4 flex items-center space-x-2 z-30 opacity-70 hover:opacity-100 transition-opacity duration-300">
+        <button
+          id="lang-btn"
+          onClick={() => setLang(lang === "zh" ? "en" : "zh")}
+          className="px-3 h-8 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-[11px] font-medium tracking-widest text-amber-100 hover:text-white hover:bg-white/10 hover:border-amber-400/40 transition-all duration-300 cursor-pointer"
+          title={lang === "zh" ? "Switch to English / Français" : "切換為繁體中文"}
+        >
+          <i className="fa-solid fa-language text-xs mr-1.5 text-amber-300/80"></i>
+          <span>{lang === "zh" ? "EN" : "中文"}</span>
+        </button>
+
         <button
           id="mute-btn"
           onClick={() => setIsMuted(!isMuted)}
@@ -412,14 +736,14 @@ export default function App() {
                     <path id="curve-bottom-render" d="M 211,141 A 83,83 0 0,1 45,141" fill="none" />
                   </defs>
 
-                  {/* 上方依半圓弧形彎曲中文字：「人生卜筮」 */}
+                  {/* 上方依半圓弧形彎曲中文字：「人間法語」 */}
                   <text className="font-serif text-[17px] font-semibold fill-[url(#gold-leaf-gradient-render)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] uppercase tracking-[6px]" textAnchor="middle">
-                    <textPath href="#curve-top-render" startOffset="50%">人生卜筮</textPath>
+                    <textPath href="#curve-top-render" startOffset="50%">人間法語</textPath>
                   </text>
 
-                  {/* 下方依反向圓弧英文字：「DIVINATION WORDS」 */}
+                  {/* 下方依反向圓弧英文字：「DHARMA WORDS」 */}
                   <text className="font-serif text-[8.5px] font-medium fill-[url(#gold-leaf-gradient-render)] drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] uppercase tracking-[3px]" textAnchor="middle">
-                    <textPath href="#curve-bottom-render" startOffset="50%">DIVINATION WORDS</textPath>
+                    <textPath href="#curve-bottom-render" startOffset="50%">DHARMA WORDS</textPath>
                   </text>
                 </svg>
               </div>
@@ -566,22 +890,22 @@ export default function App() {
           {/* 東方禪意標題與文字 (Serene Calligraphy Style Titles) */}
           <div className="text-center mt-2 z-10">
             <p className="text-[10px] tracking-[0.42em] uppercase mb-1 opacity-50 font-sans text-amber-200/60">
-              La Divination de la Vie
+              {lang === "zh" ? "Paroles de Sagesse" : "DHARMA WORDS"}
             </p>
-            <h1 className="text-2xl md:text-3xl font-light italic text-[#FDFCFC] font-serif tracking-wider">
-              Sagesse du Jour
+            <h1 className="text-2xl md:text-3xl font-light text-[#FDFCFC] font-serif tracking-wider">
+              {lang === "zh" ? "星雲大師 • 人間法語" : "Venerable Master Hsing Yun"}
             </h1>
             <div className="w-10 h-[1.5px] bg-amber-400/50 mx-auto my-3"></div>
             
-            <h2 id="main-title" className="text-sm font-serif text-[#EAE3DB] font-medium tracking-widest text-center uppercase">
-              人生卜筮系統
+            <h2 id="main-title" className="text-[11px] font-serif text-amber-200/60 font-medium tracking-widest text-center uppercase">
+              {lang === "zh" ? "佛光山開山祖師星雲大師" : "Founder of Fo Guang Shan"}
             </h2>
             <p id="sub-title" className="text-[11px] text-amber-200/40 tracking-widest text-center mt-3 font-light min-h-[20px]">
               {isShaking 
-                ? "— 正在為您求取佛法語，請心無雜念 —" 
+                ? (lang === "zh" ? "— 正在為您求取佛法語，請心無雜念 —" : "— Shaking the sphere with deep reverence —")
                 : luckyScrollFlying
-                  ? "— 佛法語已現，心光正引領幻化 —"
-                  : "— 點擊玻璃圓球，抽取人生卜筮 —"
+                  ? (lang === "zh" ? "— 佛法語已現，正在莊嚴幻化 —" : "— Dharma word revealed, beautifully unrolling —")
+                  : (lang === "zh" ? "— 點擊玻璃圓球，抽取人生卜筮 —" : "— Click the Glass Sphere to draw a Dharma Word —")
               }
             </p>
           </div>
@@ -612,13 +936,13 @@ export default function App() {
                   {/* 上方古典文字裝飾 */}
                   <div className="flex flex-col items-center">
                     <div className="text-[9px] tracking-[0.3em] text-[#8d6e63] uppercase mb-1 font-sans">
-                      La Sagesse de la Vie
+                      {lang === "zh" ? "Paroles de Sagesse" : "Dharma Words"}
                     </div>
-                    <h2 className="text-xl md:text-2xl font-light italic text-[#3e2723] font-serif mb-1 leading-none">
-                      Sagesse du Jour
+                    <h2 className="text-base md:text-lg font-semibold text-[#3e2723] font-serif mb-1 leading-tight tracking-wider">
+                      {lang === "zh" ? "佛光山開山祖師星雲大師" : "Venerable Master Hsing Yun"}
                     </h2>
                     <div className="text-[10px] text-[#8d6e63]/60 tracking-[0.2em] uppercase font-serif">
-                      人生卜筮系統
+                      {lang === "zh" ? "人間法語" : "Dharma Words for the Human World"}
                     </div>
                     <div className="w-12 h-[1px] bg-[#bd9a7a]/40 mx-auto my-2"></div>
                   </div>
@@ -637,6 +961,7 @@ export default function App() {
                       alt="Zen Wisdom"
                       className="w-full h-full object-cover rounded-lg select-none"
                       referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
                     />
                     <div className="absolute top-2 right-3 text-[8px] tracking-widest uppercase opacity-40 font-mono text-amber-900">
                       CHIT #{selectedChit.id}
@@ -644,29 +969,68 @@ export default function App() {
                   </div>
 
                   {/* 籤詩與法語內容 */}
-                  <div className="space-y-1.5 px-2 text-center my-2">
-                    <p id="result-french" className="text-sm md:text-base italic text-[#4e2f25] font-serif leading-relaxed font-semibold">
-                      "{selectedChit.french}"
-                    </p>
-                    <p id="result-chinese" className="text-xs md:text-sm font-bold text-[#8c4f2b] tracking-wider">
-                      {selectedChit.chinese}
-                    </p>
-                    <p id="result-interpretation" className="text-[10px] md:text-xs text-[#5c4a40]/90 leading-relaxed max-w-[340px] mx-auto font-light">
+                  <div className="space-y-2 px-2 text-center my-2 overflow-y-auto max-h-[35vh]">
+                    {lang === "zh" ? (
+                      <>
+                        <p id="result-chinese" className="text-base md:text-lg font-bold text-[#3e2723] tracking-wider font-serif">
+                          {selectedChit.chinese}
+                        </p>
+                        <p id="result-french" className="text-xs md:text-sm italic text-[#5c4a40] font-sans leading-relaxed mt-1 px-1 max-w-[360px] mx-auto">
+                          "{selectedChit.french}"
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p id="result-french" className="text-sm md:text-base italic text-[#3e2723] font-serif leading-relaxed font-semibold">
+                          "{selectedChit.french}"
+                        </p>
+                        <p id="result-chinese" className="text-xs md:text-sm font-bold text-[#8c4f2b] tracking-wider mt-1">
+                          {selectedChit.chinese}
+                        </p>
+                      </>
+                    )}
+
+                    <div className="w-8 h-[1px] bg-[#bd9a7a]/20 mx-auto my-1.5"></div>
+                    
+                    <div className="text-[9px] font-bold text-[#8d6e63] uppercase tracking-widest">
+                      {lang === "zh" ? "【 今日開示 】" : "【 Daily Guidance 】"}
+                    </div>
+
+                    <p id="result-interpretation" className="text-[10px] md:text-xs text-[#5c4a40]/90 leading-relaxed max-w-[340px] mx-auto font-light mt-1">
                       {selectedChit.interpretation}
+                    </p>
+                    <p className="text-[10px] text-[#8d6e63] font-serif mt-2 font-semibold tracking-wider text-right pr-4">
+                      {lang === "zh" ? "— 佛光山開山祖師 星雲大師" : "— Venerable Master Hsing Yun, Founder of Fo Guang Shan"}
                     </p>
                   </div>
 
-                  {/* 收下此卜按鈕與備註 */}
-                  <div className="border-t border-[#bd9a7a]/20 pt-2 flex flex-col items-center">
-                    <button
-                      id="modal-close-button"
-                      onClick={handleCloseModal}
-                      className="bg-[#3e2723] hover:bg-[#52332c] text-[#fdf8eb] active:scale-95 px-8 py-2 rounded-full text-xs tracking-[0.2em] uppercase transition-all duration-300 shadow-md font-semibold border border-[#d4af37]/40 cursor-pointer"
-                    >
-                      收下此卜
-                    </button>
-                    <p className="text-[9px] text-[#8d6e63]/50 tracking-widest mt-1.5">
-                      收下此卜，遇見更好的自己
+                  {/* 保存與關閉按鈕 */}
+                  <div className="border-t border-[#bd9a7a]/20 pt-3 flex flex-col items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full justify-center">
+                      <button
+                        id="save-card-button"
+                        onClick={handleSaveCard}
+                        disabled={isGeneratingCard}
+                        className="bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-[#fdf8eb] active:scale-95 disabled:opacity-50 px-5 py-2 rounded-full text-xs tracking-[0.15em] transition-all duration-300 shadow-md font-semibold border border-[#d4af37]/50 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <i className={`fa-solid ${isGeneratingCard ? "fa-spinner animate-spin" : "fa-download"}`}></i>
+                        {isGeneratingCard 
+                          ? (lang === "zh" ? "正在生成圖卡..." : "Generating Card...") 
+                          : (lang === "zh" ? "保存法語卡片" : "Save Dharma Card")
+                        }
+                      </button>
+                      
+                      <button
+                        id="modal-close-button"
+                        onClick={handleCloseModal}
+                        className="bg-[#3e2723] hover:bg-[#52332c] text-[#fdf8eb] active:scale-95 px-5 py-2 rounded-full text-xs tracking-[0.15em] uppercase transition-all duration-300 shadow-md font-semibold border border-[#bd9a7a]/40 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <i className="fa-solid fa-circle-check"></i>
+                        {lang === "zh" ? "收下此卜" : "Receive Blessing"}
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-[#8d6e63]/50 tracking-widest mt-1">
+                      {lang === "zh" ? "收下此卜，遇見更好的自己" : "Receive this blessing to find a better path"}
                     </p>
                   </div>
                 </div>
