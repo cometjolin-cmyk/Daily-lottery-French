@@ -37,7 +37,7 @@ const BuddhaIcon = () => (
 
 export default function App() {
   const [chits] = useState<Chit[]>(DEFAULT_CHITS);
-  const [lang, setLang] = useState<"zh" | "en">("zh");
+  const [lang, setLang] = useState<"zh" | "en" | "fil">("zh");
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
   const [luckyScrollFlying, setLuckyScrollFlying] = useState<boolean>(false);
@@ -48,6 +48,17 @@ export default function App() {
   const [isPreloading, setIsPreloading] = useState<boolean>(false);
   const [isGeneratingCard, setIsGeneratingCard] = useState<boolean>(false);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; vx: number; vy: number; scale: number; delay: number }>>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // 自動清除 Toast 消息
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   // ==========================================
   // 2. 靜態生成 90 個內部籤條捲軸 (Pile Generator - 90 Scrolls)
@@ -398,10 +409,10 @@ export default function App() {
       ctx.lineTo(670, 165);
       ctx.stroke();
 
-      // 副標題：「人間法語」
+      // 副標題：「星雲法語」
       ctx.fillStyle = "#a16b1a";
       ctx.font = "26px 'Noto Serif TC', 'PingFang TC', serif";
-      ctx.fillText(lang === "zh" ? "• 人間法語 •" : "• Dharma Words for the Human World •", 540, 205);
+      ctx.fillText(lang === "zh" ? "• 星雲法語 •" : "• Dharma Words •", 540, 205);
 
       // 5. 繪製中央大師法語圖片
       const drawImageOnCanvas = () => {
@@ -499,9 +510,9 @@ export default function App() {
           "#3e2723"
         );
 
-        // 6b. 精緻法文/英文翻譯
+        // 6b. 精緻菲律賓文翻譯
         lastTextY = wrapText(
-          selectedChit.french ? `"${selectedChit.french}"` : "",
+          selectedChit.filipino ? `"${selectedChit.filipino}"` : "",
           540,
           endChY + 70,
           840,
@@ -509,10 +520,32 @@ export default function App() {
           "italic 30px 'Georgia', 'Times New Roman', serif",
           "#5d4037"
         );
+      } else if (lang === "fil") {
+        // 6a. 菲律賓法語內容優先 (更大、更典雅)
+        const endFilY = wrapText(
+          selectedChit.filipino ? `"${selectedChit.filipino}"` : "",
+          540,
+          1090,
+          840,
+          50,
+          "bold italic 36px 'Georgia', 'Times New Roman', serif",
+          "#3e2723"
+        );
+
+        // 6b. 經典中文字：副標題
+        lastTextY = wrapText(
+          selectedChit.chinese || "",
+          540,
+          endFilY + 65,
+          880,
+          55,
+          "bold 32px 'Noto Serif TC', 'PingFang TC', serif",
+          "#6d4c41"
+        );
       } else {
-        // 6a. 英/法文法語內容優先 (更大、更典雅)
+        // 6a. 英文法語內容優先 (更大、更典雅)
         const endEnY = wrapText(
-          selectedChit.french ? `"${selectedChit.french}"` : "",
+          selectedChit.english ? `"${selectedChit.english}"` : (selectedChit.filipino ? `"${selectedChit.filipino}"` : ""),
           540,
           1090,
           840,
@@ -545,11 +578,23 @@ export default function App() {
       const interpTitleY = lastTextY + 95;
       ctx.font = "bold 26px 'Noto Serif TC', 'PingFang TC', serif";
       ctx.fillStyle = "#8d6e63";
-      ctx.fillText(lang === "zh" ? "【 今日開示 】" : "【 Daily Guidance 】", 540, interpTitleY);
+      ctx.fillText(
+        lang === "zh" 
+          ? "【 今日開示 】" 
+          : lang === "fil"
+            ? "【 Gabay sa Araw-Araw 】"
+            : "【 Daily Guidance 】",
+        540,
+        interpTitleY
+      );
 
       const interpY = interpTitleY + 50;
       const endInterpY = wrapText(
-        selectedChit.interpretation || "",
+        lang === "zh" 
+          ? (selectedChit.interpretation || "") 
+          : lang === "fil"
+            ? (selectedChit.filipinoInterpretation || selectedChit.englishInterpretation || "")
+            : (selectedChit.englishInterpretation || selectedChit.interpretation || ""),
         540,
         interpY,
         820,
@@ -563,7 +608,11 @@ export default function App() {
       ctx.font = "bold 28px 'Noto Serif TC', 'PingFang TC', serif";
       ctx.fillStyle = "#795548";
       ctx.fillText(
-        lang === "zh" ? "— 佛光山開山祖師 星雲大師" : "— Venerable Master Hsing Yun, Founder of Fo Guang Shan",
+        lang === "zh" 
+          ? "— 佛光山開山祖師 星雲大師" 
+          : lang === "fil"
+            ? "— Venerable Master Hsing Yun, Tagapagtatag ng Fo Guang Shan"
+            : "— Venerable Master Hsing Yun, Founder of Fo Guang Shan",
         540,
         attrY
       );
@@ -595,9 +644,23 @@ export default function App() {
       link.href = dataUrl;
       link.click();
 
+      setToastMessage(
+        lang === "zh" 
+          ? "法語圖卡已成功導出，請查收下載檔案！" 
+          : lang === "fil"
+            ? "Matagumpay na na-export ang Dharma card! Mangyaring suriin ang iyong mga download."
+            : "Dharma card exported successfully! Please check your downloads."
+      );
+
     } catch (err) {
       console.error("Canvas card generation failed:", err);
-      alert("圖卡下載失敗，請直接長按螢幕截圖保存法語。");
+      setToastMessage(
+        lang === "zh" 
+          ? "圖卡下載失敗，請直接長按螢幕截圖保存法語。" 
+          : lang === "fil"
+            ? "Nabigo ang pag-save ng card. Mangyaring pindutin nang matagal o i-screenshot para i-save."
+            : "Card save failed. Please long-press or screenshot to save."
+      );
     } finally {
       setIsGeneratingCard(false);
     }
@@ -649,12 +712,12 @@ export default function App() {
       <div className="absolute top-4 right-4 flex items-center space-x-2 z-30 opacity-70 hover:opacity-100 transition-opacity duration-300">
         <button
           id="lang-btn"
-          onClick={() => setLang(lang === "zh" ? "en" : "zh")}
+          onClick={() => setLang(lang === "zh" ? "en" : lang === "en" ? "fil" : "zh")}
           className="px-3 h-8 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-[11px] font-medium tracking-widest text-amber-100 hover:text-white hover:bg-white/10 hover:border-amber-400/40 transition-all duration-300 cursor-pointer"
-          title={lang === "zh" ? "Switch to English / Français" : "切換為繁體中文"}
+          title={lang === "zh" ? "Switch to English" : lang === "en" ? "Lumipat sa Filipino" : "切換至繁體中文"}
         >
           <i className="fa-solid fa-language text-xs mr-1.5 text-amber-300/80"></i>
-          <span>{lang === "zh" ? "EN" : "中文"}</span>
+          <span>{lang === "zh" ? "EN" : lang === "en" ? "FIL" : "中文"}</span>
         </button>
 
         <button
@@ -736,14 +799,14 @@ export default function App() {
                     <path id="curve-bottom-render" d="M 211,141 A 83,83 0 0,1 45,141" fill="none" />
                   </defs>
 
-                  {/* 上方依半圓弧形彎曲中文字：「人間法語」 */}
+                  {/* 上方依半圓弧形彎曲中文字：「星雲法語」 */}
                   <text className="font-serif text-[17px] font-semibold fill-[url(#gold-leaf-gradient-render)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] uppercase tracking-[6px]" textAnchor="middle">
-                    <textPath href="#curve-top-render" startOffset="50%">人間法語</textPath>
+                    <textPath href="#curve-top-render" startOffset="50%">{lang === "zh" ? "星雲法語" : lang === "fil" ? "SALITA NG DHARMA" : "DHARMA WORDS"}</textPath>
                   </text>
 
                   {/* 下方依反向圓弧英文字：「DHARMA WORDS」 */}
                   <text className="font-serif text-[8.5px] font-medium fill-[url(#gold-leaf-gradient-render)] drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] uppercase tracking-[3px]" textAnchor="middle">
-                    <textPath href="#curve-bottom-render" startOffset="50%">DHARMA WORDS</textPath>
+                    <textPath href="#curve-bottom-render" startOffset="50%">{lang === "zh" ? "DHARMA WORDS" : "HSING YUN"}</textPath>
                   </text>
                 </svg>
               </div>
@@ -857,29 +920,112 @@ export default function App() {
             {/* 飛升紙捲軸動畫組件 (Lucky Scroll Flying Path) */}
             <AnimatePresence>
               {luckyScrollFlying && (
-                <motion.div
-                  initial={{ y: 50, x: 0, rotate: 0, scale: 0.8, opacity: 0 }}
-                  animate={{
-                    y: [-10, -180],
-                    rotate: [0, 540],
-                    scale: [0.8, 2.4],
-                    opacity: [0, 1, 1],
-                  }}
-                  exit={{ scale: 3.5, opacity: 0 }}
-                  transition={{ duration: 0.85, ease: "easeInOut" }}
-                  className={`absolute left-1/2 -translate-x-1/2 w-10 h-4 rounded-full border border-black/20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] z-40 ${
-                    luckyScrollColor === 'pink'
-                      ? "bg-gradient-to-r from-[#FFD2CC] via-[#FFA899] to-[#FFC4BA]"
-                      : "bg-gradient-to-r from-[#FFFDFD] via-[#F4E3E0] to-[#FFFDFD]"
-                  }`}
-                  style={{ top: "110px" }}
-                >
-                  <div className="absolute inset-y-0 left-0.5 w-[3px] bg-black/15 rounded-full"></div>
-                  <div className="absolute inset-y-0 right-0.5 w-[3px] bg-black/15 rounded-full"></div>
-                  <div className={`absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 ${
-                    luckyScrollColor === 'pink' ? "bg-white/60" : "bg-red-400"
-                  }`}></div>
-                </motion.div>
+                <div className="absolute left-1/2 z-40" style={{ top: "110px" }}>
+                  {/* 1. 神聖金色蓮花光圈與同心圓 (Zen Healing Halo) */}
+                  <motion.div
+                    initial={{ y: 50, scale: 0, opacity: 0 }}
+                    animate={{
+                      y: -180,
+                      scale: [1, 1.4, 1.2],
+                      opacity: [0, 0.8, 0.9],
+                    }}
+                    transition={{ duration: 0.85, ease: "easeInOut" }}
+                    exit={{ scale: 1.8, opacity: 0 }}
+                    className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 w-28 h-28 pointer-events-none flex items-center justify-center"
+                  >
+                    {/* 第一層：外圍旋轉的金色神聖曼陀羅/蓮花花紋 */}
+                    <motion.svg
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                      className="w-full h-full text-amber-400/40"
+                      viewBox="0 0 100 100"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      {/* 繪製 8 瓣精緻蓮花瓣 */}
+                      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+                        <path
+                          key={angle}
+                          d="M 50,50 C 45,25 55,25 50,50 Z"
+                          transform={`rotate(${angle} 50 50)`}
+                          fill="currentColor"
+                          fillOpacity="0.04"
+                        />
+                      ))}
+                      {/* 同心圓 */}
+                      <circle cx="50" cy="50" r="40" strokeDasharray="3 3" />
+                      <circle cx="50" cy="50" r="32" strokeDasharray="1 1" />
+                      <circle cx="50" cy="50" r="24" />
+                    </motion.svg>
+
+                    {/* 第二層：呼吸起伏的溫潤金色光暈 */}
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.15, 1],
+                        opacity: [0.3, 0.6, 0.3],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="absolute w-20 h-20 rounded-full bg-gradient-to-r from-amber-400/25 to-yellow-300/10 blur-md"
+                    />
+                  </motion.div>
+
+                  {/* 2. 智慧加載狀態文字：明示系統正在跑，非當機 (Dharma Preloading Elegant Text) */}
+                  <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{
+                      y: -115, // 剛好在飛升到 -180 的捲軸下方 65px
+                      opacity: [0, 0.9, 1],
+                    }}
+                    transition={{ duration: 0.85, ease: "easeInOut" }}
+                    exit={{ opacity: 0 }}
+                    className="absolute left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap flex flex-col items-center gap-1.5"
+                  >
+                    {/* 精巧金色呼吸微光點 */}
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                      <span className="w-1 h-1 rounded-full bg-amber-300"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                    </div>
+                    {/* 古典禪意提示字，多國語言支援 */}
+                    <p className="text-[10px] md:text-[11px] font-serif tracking-[0.25em] text-amber-200/90 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] bg-black/45 px-3 py-1 rounded-full border border-amber-500/20 backdrop-blur-sm shadow-lg">
+                      {lang === "zh" 
+                        ? "汲取法水，莊嚴幻化中..." 
+                        : lang === "fil" 
+                          ? "Koneksyon sa karunungan, nagpapakita..." 
+                          : "Aligning with Dharma, manifesting..."
+                      }
+                    </p>
+                  </motion.div>
+
+                  {/* 3. 紙捲軸本體 */}
+                  <motion.div
+                    initial={{ y: 50, rotate: 0, scale: 0.8, opacity: 0 }}
+                    animate={{
+                      y: -180,
+                      rotate: 540,
+                      scale: 2.4,
+                      opacity: 1,
+                    }}
+                    exit={{ scale: 3.5, opacity: 0 }}
+                    transition={{ duration: 0.85, ease: "easeInOut" }}
+                    className={`absolute left-1/2 -translate-x-1/2 w-10 h-4 rounded-full border border-black/20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] z-40 ${
+                      luckyScrollColor === 'pink'
+                        ? "bg-gradient-to-r from-[#FFD2CC] via-[#FFA899] to-[#FFC4BA]"
+                        : "bg-gradient-to-r from-[#FFFDFD] via-[#F4E3E0] to-[#FFFDFD]"
+                    }`}
+                  >
+                    <div className="absolute inset-y-0 left-0.5 w-[3px] bg-black/15 rounded-full"></div>
+                    <div className="absolute inset-y-0 right-0.5 w-[3px] bg-black/15 rounded-full"></div>
+                    <div className={`absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 ${
+                      luckyScrollColor === 'pink' ? "bg-white/60" : "bg-red-400"
+                    }`}></div>
+                  </motion.div>
+                </div>
               )}
             </AnimatePresence>
           </div>
@@ -890,22 +1036,37 @@ export default function App() {
           {/* 東方禪意標題與文字 (Serene Calligraphy Style Titles) */}
           <div className="text-center mt-2 z-10">
             <p className="text-[10px] tracking-[0.42em] uppercase mb-1 opacity-50 font-sans text-amber-200/60">
-              {lang === "zh" ? "Paroles de Sagesse" : "DHARMA WORDS"}
+              {lang === "zh" ? "HUMANISTIC DHARMA" : lang === "fil" ? "MGA SALITA NG DHARMA" : "DHARMA WORDS"}
             </p>
             <h1 className="text-2xl md:text-3xl font-light text-[#FDFCFC] font-serif tracking-wider">
-              {lang === "zh" ? "星雲大師 • 人間法語" : "Venerable Master Hsing Yun"}
+              {lang === "zh" ? (
+                "星雲大師 • 星雲法語"
+              ) : (
+                <>
+                  <span className="whitespace-nowrap">Venerable Master Hsing Yun</span>
+                  {" • "}
+                  <span>{lang === "fil" ? "Salita ng Dharma" : "Dharma Words"}</span>
+                </>
+              )}
             </h1>
             <div className="w-10 h-[1.5px] bg-amber-400/50 mx-auto my-3"></div>
             
             <h2 id="main-title" className="text-[11px] font-serif text-amber-200/60 font-medium tracking-widest text-center uppercase">
-              {lang === "zh" ? "佛光山開山祖師星雲大師" : "Founder of Fo Guang Shan"}
+              {lang === "zh" ? (
+                "佛光山開山祖師星雲大師"
+              ) : (
+                <>
+                  <span className="whitespace-nowrap">Venerable Master Hsing Yun</span>
+                  {lang === "fil" ? ", Tagapagtatag ng Fo Guang Shan" : ", Founder of Fo Guang Shan"}
+                </>
+              )}
             </h2>
             <p id="sub-title" className="text-[11px] text-amber-200/40 tracking-widest text-center mt-3 font-light min-h-[20px]">
               {isShaking 
-                ? (lang === "zh" ? "— 正在為您求取佛法語，請心無雜念 —" : "— Shaking the sphere with deep reverence —")
+                ? (lang === "zh" ? "— 正在為您求取佛法語，請心無雜念 —" : lang === "fil" ? "— Inaalog ang plorera nang may malalim na paggalang —" : "— Shaking the sphere with deep reverence —")
                 : luckyScrollFlying
-                  ? (lang === "zh" ? "— 佛法語已現，正在莊嚴幻化 —" : "— Dharma word revealed, beautifully unrolling —")
-                  : (lang === "zh" ? "— 點擊玻璃圓球，抽取人生卜筮 —" : "— Click the Glass Sphere to draw a Dharma Word —")
+                  ? (lang === "zh" ? "— 佛法語已現，正在莊嚴幻化 —" : lang === "fil" ? "— Lumitaw na ang Salita ng Dharma, dahan-dahang nagbubukas —" : "— Dharma word revealed, beautifully unrolling —")
+                  : (lang === "zh" ? "— 點擊玻璃圓球，抽取人生卜筮 —" : lang === "fil" ? "— I-click ang Bubog na Globo para kumuha ng Salita ng Dharma —" : "— Click the Glass Sphere to draw a Dharma Word —")
               }
             </p>
           </div>
@@ -931,106 +1092,138 @@ export default function App() {
               <div className="scroll-rod rod-left"></div>
 
               {/* 中間宣紙 */}
-              <div className="scroll-paper font-serif">
-                <div className="scroll-content text-[#3e2723]">
+              <div className="scroll-paper font-serif bg-gradient-to-b from-[#fdfbf7] via-[#faf5e6] to-[#f5ebd0] relative border-[6px] md:border-[10px] border-[#c5a059] p-3 md:p-6 overflow-hidden">
+                {/* 內襯紅褐色古典細框線 */}
+                <div className="absolute inset-1.5 md:inset-3 border border-[#8d6e63] pointer-events-none z-10"></div>
+
+                {/* 四角中式古典金角花飾 */}
+                <div className="absolute top-2.5 left-2.5 md:top-4 md:left-4 w-6 h-6 border-t-[3px] border-l-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute top-2.5 right-2.5 md:top-4 md:right-4 w-6 h-6 border-t-[3px] border-r-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute bottom-2.5 left-2.5 md:bottom-4 md:left-4 w-6 h-6 border-b-[3px] border-l-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute bottom-2.5 right-2.5 md:bottom-4 md:right-4 w-6 h-6 border-b-[3px] border-r-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+
+                {/* 仿實體篆刻印章「佛光人間」 */}
+                <div className="absolute bottom-4 right-4 md:bottom-7 md:right-7 w-9 h-9 md:w-12 md:h-12 bg-[#b71c1c] border border-[#fff9c4] flex flex-col items-center justify-center text-[7px] md:text-[9px] font-bold text-[#fff9c4] leading-tight select-none shadow-[0_3px_8px_rgba(0,0,0,0.15)] z-20 font-serif">
+                  <span className="border-b border-[#fff9c4]/30 pb-0.5 mb-0.5">佛光</span>
+                  <span>人間</span>
+                </div>
+
+                <div className="scroll-content text-[#3e2723] z-10 relative h-full flex flex-col justify-between py-1 px-1 md:px-2">
                   {/* 上方古典文字裝飾 */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-[9px] tracking-[0.3em] text-[#8d6e63] uppercase mb-1 font-sans">
-                      {lang === "zh" ? "Paroles de Sagesse" : "Dharma Words"}
-                    </div>
-                    <h2 className="text-base md:text-lg font-semibold text-[#3e2723] font-serif mb-1 leading-tight tracking-wider">
+                  <div className="flex flex-col items-center pt-1 select-none">
+                    <h2 className="text-xs md:text-sm font-bold text-[#3e2723] font-serif tracking-[0.15em] mb-0.5 whitespace-nowrap">
                       {lang === "zh" ? "佛光山開山祖師星雲大師" : "Venerable Master Hsing Yun"}
                     </h2>
-                    <div className="text-[10px] text-[#8d6e63]/60 tracking-[0.2em] uppercase font-serif">
-                      {lang === "zh" ? "人間法語" : "Dharma Words for the Human World"}
+                    <div className="w-16 h-[1.5px] bg-[#c5a059] my-1"></div>
+                    <div className="text-[9px] md:text-[10px] text-[#a16b1a] font-serif tracking-widest uppercase font-semibold">
+                      {lang === "zh" ? "• 星雲法語 •" : lang === "fil" ? "• Salita ng Dharma •" : "• Dharma Words •"}
                     </div>
-                    <div className="w-12 h-[1px] bg-[#bd9a7a]/40 mx-auto my-2"></div>
                   </div>
 
-                  {/* 宣紙中的 2D 圖片 (帶有精緻古典邊框與宣紙背景襯托) */}
+                  {/* 宣紙中的 2D 圖片 (帶有精緻古典邊框與宣紙背景襯托，且 object-contain 顯示完整圖) */}
                   <div 
-                    className="flex-1 flex items-center justify-center my-2 overflow-hidden rounded-xl border-2 border-[#bd9a7a]/20 bg-[#faf5e6] shadow-md relative p-1.5 w-full mx-auto"
+                    className="w-full max-w-[340px] mx-auto my-2 overflow-hidden rounded border-2 border-[#bd9a7a] bg-[#fcf9f2] shadow-[0_6px_16px_rgba(139,90,43,0.12)] relative p-0.5 flex items-center justify-center"
                     style={{ 
-                      aspectRatio: '1375 / 1144',
-                      maxHeight: 'min(420px, 48vh)'
+                      aspectRatio: '6 / 5',
                     }}
                   >
                     <img
                       id="result-image"
                       src={selectedChit.image_url}
                       alt="Zen Wisdom"
-                      className="w-full h-full object-cover rounded-lg select-none"
+                      className="w-full h-full object-contain select-none"
                       referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
                     />
-                    <div className="absolute top-2 right-3 text-[8px] tracking-widest uppercase opacity-40 font-mono text-amber-900">
+                    <div className="absolute top-1 right-2 text-[7px] tracking-widest uppercase opacity-30 font-mono text-[#8d6e63]">
                       CHIT #{selectedChit.id}
                     </div>
                   </div>
 
                   {/* 籤詩與法語內容 */}
-                  <div className="space-y-2 px-2 text-center my-2 overflow-y-auto max-h-[35vh]">
+                  <div className="space-y-1.5 px-2 text-center my-1 overflow-y-auto max-h-[25vh] scrollbar-thin scrollbar-thumb-amber-700/20">
                     {lang === "zh" ? (
                       <>
-                        <p id="result-chinese" className="text-base md:text-lg font-bold text-[#3e2723] tracking-wider font-serif">
+                        <p id="result-chinese" className="text-sm md:text-base lg:text-lg font-bold text-[#3e2723] tracking-wider font-serif leading-relaxed">
                           {selectedChit.chinese}
                         </p>
-                        <p id="result-french" className="text-xs md:text-sm italic text-[#5c4a40] font-sans leading-relaxed mt-1 px-1 max-w-[360px] mx-auto">
-                          "{selectedChit.french}"
+                        <p id="result-filipino" className="text-[11px] md:text-xs italic text-[#5c4a40] font-sans leading-relaxed mt-1 px-1 max-w-[360px] mx-auto">
+                          "{selectedChit.filipino}"
+                        </p>
+                      </>
+                    ) : lang === "fil" ? (
+                      <>
+                        <p id="result-filipino" className="text-sm md:text-base lg:text-lg italic text-[#3e2723] font-serif leading-relaxed font-semibold">
+                          "{selectedChit.filipino}"
+                        </p>
+                        <p id="result-chinese" className="text-[11px] md:text-xs font-bold text-[#8c4f2b] tracking-wider mt-1">
+                          {selectedChit.chinese}
                         </p>
                       </>
                     ) : (
                       <>
-                        <p id="result-french" className="text-sm md:text-base italic text-[#3e2723] font-serif leading-relaxed font-semibold">
-                          "{selectedChit.french}"
+                        <p id="result-english" className="text-sm md:text-base lg:text-lg italic text-[#3e2723] font-serif leading-relaxed font-semibold">
+                          "{selectedChit.english || selectedChit.filipino}"
                         </p>
-                        <p id="result-chinese" className="text-xs md:text-sm font-bold text-[#8c4f2b] tracking-wider mt-1">
+                        <p id="result-chinese" className="text-[11px] md:text-xs font-bold text-[#8c4f2b] tracking-wider mt-1">
                           {selectedChit.chinese}
                         </p>
                       </>
                     )}
 
-                    <div className="w-8 h-[1px] bg-[#bd9a7a]/20 mx-auto my-1.5"></div>
+                    <div className="w-16 h-[1px] bg-[#bd9a7a]/30 mx-auto my-1.5"></div>
                     
-                    <div className="text-[9px] font-bold text-[#8d6e63] uppercase tracking-widest">
-                      {lang === "zh" ? "【 今日開示 】" : "【 Daily Guidance 】"}
+                    <div className="text-[8px] md:text-[9px] font-bold text-[#8d6e63] uppercase tracking-widest mb-0.5">
+                      {lang === "zh" ? "【 今日開示 】" : lang === "fil" ? "【 Gabay sa Araw-Araw 】" : "【 Daily Guidance 】"}
                     </div>
 
-                    <p id="result-interpretation" className="text-[10px] md:text-xs text-[#5c4a40]/90 leading-relaxed max-w-[340px] mx-auto font-light mt-1">
-                      {selectedChit.interpretation}
+                    <p id="result-interpretation" className="text-[10px] md:text-xs text-[#5c4a40]/90 leading-relaxed max-w-[320px] mx-auto font-light">
+                      {lang === "zh" 
+                        ? selectedChit.interpretation 
+                        : lang === "fil"
+                          ? (selectedChit.filipinoInterpretation || selectedChit.englishInterpretation)
+                          : selectedChit.englishInterpretation
+                      }
                     </p>
-                    <p className="text-[10px] text-[#8d6e63] font-serif mt-2 font-semibold tracking-wider text-right pr-4">
-                      {lang === "zh" ? "— 佛光山開山祖師 星雲大師" : "— Venerable Master Hsing Yun, Founder of Fo Guang Shan"}
+                    <p className="text-[10px] text-[#8d6e63] font-serif mt-2 font-semibold tracking-wider text-right pr-2">
+                      {lang === "zh" ? (
+                        "— 佛光山開山祖師 星雲大師"
+                      ) : (
+                        <>
+                          — <span className="whitespace-nowrap">Venerable Master Hsing Yun</span>
+                          {lang === "fil" ? ", Tagapagtatag ng Fo Guang Shan" : ", Founder of Fo Guang Shan"}
+                        </>
+                      )}
                     </p>
                   </div>
 
                   {/* 保存與關閉按鈕 */}
-                  <div className="border-t border-[#bd9a7a]/20 pt-3 flex flex-col items-center gap-2">
-                    <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full justify-center">
+                  <div className="border-t border-[#bd9a7a]/20 pt-2 flex flex-col items-center gap-1.5 z-20 relative">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full justify-center">
                       <button
                         id="save-card-button"
                         onClick={handleSaveCard}
                         disabled={isGeneratingCard}
-                        className="bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-[#fdf8eb] active:scale-95 disabled:opacity-50 px-5 py-2 rounded-full text-xs tracking-[0.15em] transition-all duration-300 shadow-md font-semibold border border-[#d4af37]/50 cursor-pointer flex items-center justify-center gap-1.5"
+                        className="bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-[#fdf8eb] active:scale-95 disabled:opacity-50 px-4 py-1.5 rounded-full text-[10px] md:text-xs tracking-[0.15em] transition-all duration-300 shadow-md font-semibold border border-[#d4af37]/50 cursor-pointer flex items-center justify-center gap-1 w-full sm:w-auto"
                       >
                         <i className={`fa-solid ${isGeneratingCard ? "fa-spinner animate-spin" : "fa-download"}`}></i>
                         {isGeneratingCard 
-                          ? (lang === "zh" ? "正在生成圖卡..." : "Generating Card...") 
-                          : (lang === "zh" ? "保存法語卡片" : "Save Dharma Card")
+                          ? (lang === "zh" ? "正在生成圖卡..." : lang === "fil" ? "Gumagawa..." : "Generating...") 
+                          : (lang === "zh" ? "保存法語卡片" : lang === "fil" ? "I-save ang Dharma Card" : "Save Dharma Card")
                         }
                       </button>
                       
                       <button
                         id="modal-close-button"
                         onClick={handleCloseModal}
-                        className="bg-[#3e2723] hover:bg-[#52332c] text-[#fdf8eb] active:scale-95 px-5 py-2 rounded-full text-xs tracking-[0.15em] uppercase transition-all duration-300 shadow-md font-semibold border border-[#bd9a7a]/40 cursor-pointer flex items-center justify-center gap-1.5"
+                        className="bg-[#3e2723] hover:bg-[#52332c] text-[#fdf8eb] active:scale-95 px-4 py-1.5 rounded-full text-[10px] md:text-xs tracking-[0.15em] uppercase transition-all duration-300 shadow-md font-semibold border border-[#bd9a7a]/40 cursor-pointer flex items-center justify-center gap-1 w-full sm:w-auto"
                       >
                         <i className="fa-solid fa-circle-check"></i>
-                        {lang === "zh" ? "收下此卜" : "Receive Blessing"}
+                        {lang === "zh" ? "收下此卜" : lang === "fil" ? "Tanggapin ang Biyaya" : "Receive Blessing"}
                       </button>
                     </div>
-                    <p className="text-[9px] text-[#8d6e63]/50 tracking-widest mt-1">
-                      {lang === "zh" ? "收下此卜，遇見更好的自己" : "Receive this blessing to find a better path"}
+                    <p className="text-[9px] text-[#8d6e63]/50 tracking-widest mt-0.5">
+                      {lang === "zh" ? "收下此卜，遇見更好的自己" : lang === "fil" ? "Tanggapin ang biyayang ito upang makahanap ng mas magandang landas" : "Receive this blessing to find a better path"}
                     </p>
                   </div>
                 </div>
@@ -1045,6 +1238,21 @@ export default function App() {
 
 
 
+      {/* Toast 提示訊息 (Custom Toast Notification) */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, scale: 0.9, x: "-50%" }}
+            className="fixed bottom-16 left-1/2 z-50 bg-[#3e2723]/95 text-[#fdf8eb] border border-[#d4af37]/40 px-6 py-3 rounded-full text-xs font-semibold tracking-widest shadow-[0_6px_20px_rgba(0,0,0,0.6)] flex items-center gap-2 whitespace-nowrap"
+          >
+            <i className="fa-solid fa-bell text-amber-300"></i>
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 底部極簡裝飾 (Decorative Zen Footer) */}
       <footer className="mt-8 w-full max-w-2xl flex justify-between items-center px-4 z-10 text-white/30 text-[9px] tracking-widest uppercase">
         <div className="flex items-center space-x-3">
@@ -1053,9 +1261,9 @@ export default function App() {
             <div className="w-1 h-2 bg-white/40 rounded-full mx-[1px]"></div>
             <div className="w-1 h-3 bg-white/40 rounded-full mx-[1px]"></div>
           </div>
-          <span>Atmosphère: Calme</span>
+          <span>{lang === "zh" ? "氛圍：幽雅靜謐" : lang === "fil" ? "Kapaligiran: Tahimik at Payapa" : "Atmosphere: Calm & Serene"}</span>
         </div>
-        <span>Propulsé par la Sérénité</span>
+        <span>{lang === "zh" ? "一葦航，心如水" : lang === "fil" ? "Gagabayan ng Karunungan" : "Guided by Wisdom"}</span>
       </footer>
 
 

@@ -6,9 +6,12 @@
 export interface Chit {
   id: string;
   image_url: string;
-  french?: string;
+  filipino?: string;
   chinese?: string;
   interpretation?: string;
+  english?: string;
+  englishInterpretation?: string;
+  filipinoInterpretation?: string;
 }
 
 export interface AppState {
