@@ -47,6 +47,7 @@ export default function App() {
   const [isScrollUnrolled, setIsScrollUnrolled] = useState<boolean>(false);
   const [isPreloading, setIsPreloading] = useState<boolean>(false);
   const [isGeneratingCard, setIsGeneratingCard] = useState<boolean>(false);
+  const [enlargedImgUrl, setEnlargedImgUrl] = useState<string | null>(null);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; vx: number; vy: number; scale: number; delay: number }>>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -462,7 +463,7 @@ export default function App() {
 
       await drawImageOnCanvas();
 
-      // 6. 繪製精緻的中英法文字與開示 (配合自動換行演算法)
+      // 6. 繪製精緻的中英法文字與開示 (配合自動換行與斷句保護演算法)
       const wrapText = (
         text: string,
         startX: number,
@@ -474,25 +475,59 @@ export default function App() {
       ) => {
         ctx.font = fontStyle;
         ctx.fillStyle = colorStyle;
-        const isWestern = /[a-zA-Z]/.test(text);
-        const tokens = isWestern ? text.split(' ') : text.split('');
-        
-        let line = '';
-        let currentY = startY;
-        
-        for (let n = 0; n < tokens.length; n++) {
-          const testLine = line + tokens[n] + (isWestern ? ' ' : '');
-          const metrics = ctx.measureText(testLine);
-          const testWidth = metrics.width;
-          if (testWidth > maxWidth && n > 0) {
-            ctx.fillText(line, startX, currentY);
-            line = tokens[n] + (isWestern ? ' ' : '');
-            currentY += lineHeight;
-          } else {
-            line = testLine;
+        if (!text) return startY;
+
+        const isWestern = /[a-zA-Z]/.test(text) && !/[\u4e00-\u9fa5]/.test(text);
+        const lines: string[] = [];
+
+        if (isWestern) {
+          const words = text.split(' ');
+          let line = '';
+          for (let n = 0; n < words.length; n++) {
+            const testLine = line + (line ? ' ' : '') + words[n];
+            if (ctx.measureText(testLine).width > maxWidth && line !== '') {
+              lines.push(line);
+              line = words[n];
+            } else {
+              line = testLine;
+            }
           }
+          if (line) lines.push(line);
+        } else {
+          // 中文或混合文字：按標點與自然子句切分 (如 "慈悲喜捨，", "惜福結緣。") 保持語意完整，不隨意斷字
+          const chunks = text.match(/[^，。；！？\n]+[，。；！？]?|./g) || [text];
+          let currentLine = '';
+
+          for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            const testLine = currentLine + chunk;
+            if (ctx.measureText(testLine).width > maxWidth && currentLine !== '') {
+              lines.push(currentLine);
+              currentLine = chunk;
+              while (ctx.measureText(currentLine).width > maxWidth) {
+                let sub = '';
+                for (const char of currentLine) {
+                  if (ctx.measureText(sub + char).width > maxWidth && sub !== '') {
+                    lines.push(sub);
+                    sub = char;
+                  } else {
+                    sub += char;
+                  }
+                }
+                currentLine = sub;
+              }
+            } else {
+              currentLine = testLine;
+            }
+          }
+          if (currentLine) lines.push(currentLine);
         }
-        ctx.fillText(line, startX, currentY);
+
+        let currentY = startY;
+        for (let l = 0; l < lines.length; l++) {
+          ctx.fillText(lines[l], startX, currentY);
+          if (l < lines.length - 1) currentY += lineHeight;
+        }
         return currentY;
       };
 
@@ -510,9 +545,10 @@ export default function App() {
           "#3e2723"
         );
 
-        // 6b. 精緻菲律賓文翻譯
+        // 6b. 精緻英文對照翻譯
+        const englishTranslation = selectedChit.english || selectedChit.filipino;
         lastTextY = wrapText(
-          selectedChit.filipino ? `"${selectedChit.filipino}"` : "",
+          englishTranslation ? `"${englishTranslation}"` : "",
           540,
           endChY + 70,
           840,
@@ -1039,7 +1075,7 @@ export default function App() {
               <p className="text-[11px] sm:text-xs md:text-sm tracking-[0.25em] sm:tracking-[0.35em] uppercase mb-1 font-bold font-sans text-[#E2C792] break-words">
                 {lang === "zh" ? "HUMANISTIC DHARMA" : lang === "fil" ? "MGA SALITA NG DHARMA" : "DHARMA WORDS"}
               </p>
-              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-[#F5E6C8] font-serif tracking-wide sm:tracking-wider drop-shadow-md leading-snug">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#F5E6C8] font-serif tracking-wide sm:tracking-wider drop-shadow-md leading-snug">
                 {lang === "zh" ? (
                   "星雲大師 • 星雲法語"
                 ) : (
@@ -1050,9 +1086,9 @@ export default function App() {
                   </span>
                 )}
               </h1>
-              <div className="w-12 sm:w-16 h-[2px] bg-[#E2C792] mx-auto my-2"></div>
+              <div className="w-16 sm:w-20 h-[2.5px] bg-[#E2C792] mx-auto my-2.5"></div>
               
-              <h2 id="main-title" className="text-xs sm:text-sm md:text-base font-serif text-[#E2C792] font-bold tracking-wide sm:tracking-widest text-center leading-normal">
+              <h2 id="main-title" className="text-sm sm:text-base md:text-lg lg:text-xl font-serif text-[#E2C792] font-extrabold tracking-wide sm:tracking-widest text-center leading-normal">
                 {lang === "zh" ? (
                   "佛光山開山祖師星雲大師"
                 ) : (
@@ -1064,14 +1100,22 @@ export default function App() {
               </h2>
             </div>
 
-            {/* 提示訊息顯眼膠囊標籤 (High Visibility Status Pill) */}
-            <div className="mt-3.5 inline-block max-w-full">
-              <p id="sub-title" className="text-xs sm:text-sm md:text-base text-[#F5E6C8] font-bold tracking-wide text-center bg-[#2B1D1D]/90 border-2 border-[#E2C792] px-4 py-2 sm:px-6 sm:py-2.5 rounded-2xl sm:rounded-full shadow-2xl backdrop-blur-md break-words leading-relaxed">
+            {/* 提示訊息顯眼膠囊標籤 (Refined Zen Status Pill for Seniors) */}
+            <div className="mt-4 inline-block max-w-full px-2">
+              <p 
+                id="sub-title" 
+                className="text-sm sm:text-base md:text-lg text-[#F5E6C8] font-bold tracking-wide text-center px-5 py-2.5 sm:px-6 sm:py-2.5 rounded-full shadow-lg backdrop-blur-md leading-relaxed text-balance [word-break:keep-all] break-normal"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.35)',
+                  border: '1px solid #D4AF37',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)'
+                }}
+              >
                 {isShaking 
-                  ? (lang === "zh" ? "— 正在為您求取佛法語，請心無雜念 —" : lang === "fil" ? "— Inaalog ang plorera nang may malalim na paggalang —" : "— Shaking the sphere with deep reverence —")
+                  ? (lang === "zh" ? "🙏 靜心祈求中，請稍候..." : lang === "fil" ? "🙏 Inaalog ang plorera nang may paggalang, sandali lamang..." : "🙏 Praying in tranquility, please wait...")
                   : luckyScrollFlying
-                    ? (lang === "zh" ? "— 佛法語已現，正在莊嚴幻化 —" : lang === "fil" ? "— Lumitaw na ang Salita ng Dharma, dahan-dahang nagbubukas —" : "— Dharma word revealed, beautifully unrolling —")
-                    : (lang === "zh" ? "— 點擊玻璃圓球，抽取人生卜筮 —" : lang === "fil" ? "— I-click ang Bubog na Globo para kumuha ng Salita ng Dharma —" : "— Click the Glass Sphere to draw a Dharma Word —")
+                    ? (lang === "zh" ? "✨ 佛法語已現，正在莊嚴開卷 ✨" : lang === "fil" ? "✨ Lumitaw na ang Salita ng Dharma, nagbubukas... ✨" : "✨ Dharma word revealed, unrolling... ✨")
+                    : (lang === "zh" ? "👉 點擊玻璃圓球，抽取人生法語 👈" : lang === "fil" ? "👉 I-click ang Bubog na Globo para kumuha ng Salita ng Dharma 👈" : "👉 Click the Glass Sphere to draw a Dharma Word 👈")
                 }
               </p>
             </div>
@@ -1103,10 +1147,10 @@ export default function App() {
                 <div className="absolute inset-1.5 md:inset-3 border border-[#8d6e63] pointer-events-none z-10"></div>
 
                 {/* 四角中式古典金角花飾 */}
-                <div className="absolute top-2.5 left-2.5 md:top-4 md:left-4 w-6 h-6 border-t-[3px] border-l-[3px] border-[#c5a059] pointer-events-none z-10"></div>
-                <div className="absolute top-2.5 right-2.5 md:top-4 md:right-4 w-6 h-6 border-t-[3px] border-r-[3px] border-[#c5a059] pointer-events-none z-10"></div>
-                <div className="absolute bottom-2.5 left-2.5 md:bottom-4 md:left-4 w-6 h-6 border-b-[3px] border-l-[3px] border-[#c5a059] pointer-events-none z-10"></div>
-                <div className="absolute bottom-2.5 right-2.5 md:bottom-4 md:right-4 w-6 h-6 border-b-[3px] border-r-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute top-2 left-2 md:top-3 md:left-3 w-5 h-5 md:w-6 md:h-6 border-t-[3px] border-l-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute top-2 right-2 md:top-3 md:right-3 w-5 h-5 md:w-6 md:h-6 border-t-[3px] border-r-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 w-5 h-5 md:w-6 md:h-6 border-b-[3px] border-l-[3px] border-[#c5a059] pointer-events-none z-10"></div>
+                <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 w-5 h-5 md:w-6 md:h-6 border-b-[3px] border-r-[3px] border-[#c5a059] pointer-events-none z-10"></div>
 
                 {/* 仿實體篆刻印章「佛光人間」 */}
                 <div className="absolute bottom-4 right-4 md:bottom-7 md:right-7 w-9 h-9 md:w-12 md:h-12 bg-[#b71c1c] border border-[#fff9c4] flex flex-col items-center justify-center text-[7px] md:text-[9px] font-bold text-[#fff9c4] leading-tight select-none shadow-[0_3px_8px_rgba(0,0,0,0.15)] z-20 font-serif">
@@ -1114,78 +1158,86 @@ export default function App() {
                   <span>人間</span>
                 </div>
 
-                <div className="scroll-content text-[#2B1D1D] z-10 relative h-full flex flex-col justify-between py-1 px-1 md:px-2">
-                  {/* 上方古典文字裝飾 */}
-                  <div className="flex flex-col items-center pt-1 select-none">
-                    <h2 className="text-sm md:text-base lg:text-lg font-bold text-[#2B1D1D] font-serif tracking-[0.15em] mb-0.5 whitespace-nowrap">
-                      {lang === "zh" ? "佛光山開山祖師星雲大師" : "Venerable Master Hsing Yun"}
+                <div className="scroll-content text-[#1A1A1A] z-10 relative h-full flex flex-col justify-between py-1 px-1 md:px-2">
+                  {/* 上方古典文字裝飾 (高對比深赭紅標題，保護排版不被遮擋) */}
+                  <div className="flex flex-col items-center pt-2 sm:pt-3 px-3 sm:px-6 w-full max-w-full select-none z-20 relative">
+                    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-extrabold text-[#6B1E10] font-serif tracking-wide text-center leading-snug px-1 w-full max-w-full drop-shadow-sm">
+                      {lang === "zh" ? "佛光山開山祖師星雲大師" : <span className="inline-block px-1">Venerable Master Hsing Yun</span>}
                     </h2>
-                    <div className="w-16 h-[2px] bg-[#C5A059] my-1"></div>
-                    <div className="text-xs md:text-sm text-[#8C4F2B] font-serif tracking-widest uppercase font-extrabold">
+                    <div className="w-20 sm:w-24 h-[2.5px] bg-[#6B1E10] my-1.5 sm:my-2 opacity-80"></div>
+                    <div className="text-xs sm:text-sm md:text-base text-[#6B1E10] font-serif tracking-widest uppercase font-extrabold text-center px-1">
                       {lang === "zh" ? "• 星雲法語 •" : lang === "fil" ? "• Salita ng Dharma •" : "• Dharma Words •"}
                     </div>
                   </div>
 
-                  {/* 宣紙中的 2D 圖片 (帶有精緻古典邊框與宣紙背景襯托) */}
+                  {/* 宣紙中的 2D 圖片 (帶有古樸印章風格放大鏡提示，自然優雅) */}
                   <div 
-                    className="w-full max-w-[350px] mx-auto my-2 overflow-hidden rounded-lg border-2 border-[#BD9A7A] bg-[#FCF9F2] shadow-[0_6px_16px_rgba(139,90,43,0.15)] relative p-0.5 flex items-center justify-center"
+                    onClick={() => setEnlargedImgUrl(selectedChit.image_url)}
+                    className="w-full max-w-[350px] mx-auto my-2 overflow-hidden rounded-xl border border-[#BD9A7A] hover:border-[#8C241C] bg-[#FCF9F2] shadow-[0_4px_16px_rgba(140,36,28,0.12)] hover:shadow-xl relative p-0.5 flex items-center justify-center cursor-pointer group transition-all duration-300 active:scale-[0.98]"
                     style={{ 
                       aspectRatio: '6 / 5',
                     }}
+                    title={lang === "zh" ? "點擊查看滿版大圖" : lang === "fil" ? "I-click para Palakihin" : "Click to view enlarged image"}
                   >
                     <img
                       id="result-image"
                       src={selectedChit.image_url}
                       alt="Zen Wisdom"
-                      className="w-full h-full object-contain select-none"
+                      className="w-full h-full object-contain select-none transition-transform duration-300 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
                     />
-                    <div className="absolute top-1 right-2 text-[8px] tracking-widest uppercase font-mono text-[#2B1D1D] font-bold bg-[#FDF8EB]/80 px-1.5 py-0.5 rounded border border-[#BD9A7A]/40">
+                    <div className="absolute top-1.5 right-2 text-[10px] tracking-widest uppercase font-mono text-[#2B1D1D] font-bold bg-[#FDF8EB]/90 px-2 py-0.5 rounded border border-[#BD9A7A]/40 shadow-sm z-10">
                       CHIT #{selectedChit.id}
+                    </div>
+
+                    {/* 古樸印章風格放大提示膠囊標籤 (Refined Zen Zoom Badge) */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#FDF8EB]/90 hover:bg-[#FDF8EB] text-[#8C241C] text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full border border-[#8C241C]/60 shadow-md flex items-center gap-1.5 backdrop-blur-sm transition-all duration-200 group-hover:scale-105 z-10">
+                      <i className="fa-solid fa-magnifying-glass-plus text-[#8C241C] text-xs"></i>
+                      <span>{lang === "zh" ? "點擊看大圖" : lang === "fil" ? "I-click para Palakihin" : "Click to Enlarge"}</span>
                     </div>
                   </div>
 
-                  {/* 籤詩與法語內容 (特大清晰字體，極致高對比與高行高) */}
-                  <div className="space-y-3 px-2 text-center my-2 overflow-y-auto max-h-[35vh] scrollbar-thin scrollbar-thumb-amber-800/40">
+                  {/* 籤詩與法語內容 (濃墨黑 #1A1A1A，極致高對比、行高 1.8 與自然斷句保護) */}
+                  <div className="space-y-3 px-2 text-center my-2 overflow-y-auto max-h-[36vh] scrollbar-thin scrollbar-thumb-amber-800/40">
                     {lang === "zh" ? (
                       <>
-                        <p id="result-chinese" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#2B1D1D] tracking-[1.5px] font-serif leading-[1.8] drop-shadow-sm">
+                        <p id="result-chinese" className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-[1.5px] font-serif leading-[1.8] drop-shadow-sm text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
                           {selectedChit.chinese}
                         </p>
-                        {selectedChit.filipino && (
-                          <p id="result-filipino" className="text-sm sm:text-base md:text-lg italic font-bold text-[#2B1D1D] font-serif leading-[1.8] mt-1.5 px-1 max-w-[420px] mx-auto">
-                            "{selectedChit.filipino}"
+                        {(selectedChit.english || selectedChit.filipino) && (
+                          <p id="result-english" className="text-sm sm:text-base md:text-lg italic font-semibold text-[#2C2C2C] font-serif leading-[1.7] mt-1.5 px-1 max-w-[440px] mx-auto text-pretty text-balance">
+                            "{selectedChit.english || selectedChit.filipino}"
                           </p>
                         )}
                       </>
                     ) : lang === "fil" ? (
                       <>
-                        <p id="result-filipino" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl italic text-[#2B1D1D] font-serif leading-[1.8] font-extrabold drop-shadow-sm">
+                        <p id="result-filipino" className="text-xl sm:text-2xl md:text-3xl italic text-[#1A1A1A] font-serif leading-[1.8] font-bold drop-shadow-sm text-pretty text-balance">
                           "{selectedChit.filipino}"
                         </p>
-                        <p id="result-chinese" className="text-sm sm:text-base md:text-lg font-bold text-[#8C4F2B] tracking-[1.5px] mt-1.5">
+                        <p id="result-chinese" className="text-base sm:text-lg md:text-xl font-bold text-[#8C241C] tracking-[1.5px] mt-1.5 text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
                           {selectedChit.chinese}
                         </p>
                       </>
                     ) : (
                       <>
-                        <p id="result-english" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl italic text-[#2B1D1D] font-serif leading-[1.8] font-extrabold drop-shadow-sm">
+                        <p id="result-english" className="text-xl sm:text-2xl md:text-3xl italic text-[#1A1A1A] font-serif leading-[1.8] font-bold drop-shadow-sm text-pretty text-balance">
                           "{selectedChit.english || selectedChit.filipino}"
                         </p>
-                        <p id="result-chinese" className="text-sm sm:text-base md:text-lg font-bold text-[#8C4F2B] tracking-[1.5px] mt-1.5">
+                        <p id="result-chinese" className="text-base sm:text-lg md:text-xl font-bold text-[#8C241C] tracking-[1.5px] mt-1.5 text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
                           {selectedChit.chinese}
                         </p>
                       </>
                     )}
 
-                    <div className="w-24 h-[2px] bg-[#BD9A7A]/50 mx-auto my-3"></div>
+                    <div className="w-20 h-[1.5px] bg-[#8C241C]/30 mx-auto my-2.5"></div>
                     
-                    <div className="text-sm sm:text-base md:text-lg font-extrabold text-[#8C4F2B] uppercase tracking-widest mb-1.5">
+                    <div className="text-sm sm:text-base md:text-lg font-bold text-[#8C241C] uppercase tracking-[0.15em] mb-1.5">
                       {lang === "zh" ? "【 今日開示 】" : lang === "fil" ? "【 Gabay sa Araw-Araw 】" : "【 Daily Guidance 】"}
                     </div>
 
-                    <p id="result-interpretation" className="text-sm sm:text-base md:text-lg font-bold text-[#2B1D1D] leading-[1.9] max-w-[440px] mx-auto tracking-[0.5px]">
+                    <p id="result-interpretation" className="text-base sm:text-lg md:text-xl font-semibold text-[#1A1A1A] leading-[1.8] max-w-[460px] mx-auto tracking-[0.5px] text-pretty text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
                       {lang === "zh" 
                         ? selectedChit.interpretation 
                         : lang === "fil"
@@ -1193,7 +1245,7 @@ export default function App() {
                           : selectedChit.englishInterpretation
                       }
                     </p>
-                    <p className="text-xs sm:text-sm md:text-base text-[#2B1D1D] font-serif mt-3 font-bold tracking-wider text-right pr-2">
+                    <p className="text-xs sm:text-sm md:text-base text-[#5C3317] font-serif mt-2.5 font-semibold tracking-wider text-right pr-2">
                       {lang === "zh" ? (
                         "— 佛光山開山祖師 星雲大師"
                       ) : (
@@ -1205,32 +1257,38 @@ export default function App() {
                     </p>
                   </div>
 
-                  {/* 保存與關閉按鈕 */}
-                  <div className="border-t-2 border-[#BD9A7A]/30 pt-3 flex flex-col items-center gap-2 z-20 relative">
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center px-1">
+                  {/* 優雅古典印章風按鈕區塊 (Lightweight Refined Zen Buttons for Seniors) */}
+                  <div className="border-t border-[#BD9A7A]/35 pt-3.5 flex flex-col items-center gap-1.5 z-20 relative">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full px-2">
+                      {/* 宣紙微黃半透明印章風按鈕 */}
                       <button
                         id="save-card-button"
                         onClick={handleSaveCard}
                         disabled={isGeneratingCard}
-                        className="bg-gradient-to-r from-[#8C4F2B] to-[#5C3317] hover:from-[#A05A30] hover:to-[#6E3D1B] text-[#F5E6C8] active:scale-95 disabled:opacity-50 px-5 py-2.5 rounded-full text-xs md:text-sm tracking-[0.15em] transition-all duration-300 shadow-xl font-bold border-2 border-[#E2C792] cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto"
+                        className="bg-[#FDF8EB]/90 hover:bg-[#F7EED8] text-[#8C241C] active:scale-95 disabled:opacity-50 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-base sm:text-lg font-bold tracking-[0.1em] transition-all duration-300 shadow-sm hover:shadow-md border border-[#8C241C]/60 hover:border-[#8C241C] cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto min-w-[170px]"
                       >
-                        <i className={`fa-solid ${isGeneratingCard ? "fa-spinner animate-spin" : "fa-download"}`}></i>
-                        {isGeneratingCard 
-                          ? (lang === "zh" ? "正在生成圖卡..." : lang === "fil" ? "Gumagawa..." : "Generating...") 
-                          : (lang === "zh" ? "保存法語卡片" : lang === "fil" ? "I-save ang Dharma Card" : "Save Dharma Card")
-                        }
+                        <i className={`fa-solid ${isGeneratingCard ? "fa-spinner animate-spin" : "fa-download"} text-base sm:text-lg`}></i>
+                        <span>
+                          {isGeneratingCard 
+                            ? (lang === "zh" ? "正在生成圖卡..." : lang === "fil" ? "Gumagawa..." : "Generating...") 
+                            : (lang === "zh" ? "保存法語圖卡" : lang === "fil" ? "I-save ang Dharma Card" : "Save Dharma Card")
+                          }
+                        </span>
                       </button>
                       
+                      {/* 典雅赭紅印章風按鈕 */}
                       <button
                         id="modal-close-button"
                         onClick={handleCloseModal}
-                        className="bg-[#2B1D1D] hover:bg-[#3E2723] text-[#F5E6C8] active:scale-95 px-5 py-2.5 rounded-full text-xs md:text-sm tracking-[0.15em] uppercase transition-all duration-300 shadow-xl font-bold border-2 border-[#E2C792] cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto"
+                        className="bg-[#8C241C] hover:bg-[#721C16] text-[#FFF8E7] active:scale-95 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-base sm:text-lg font-bold tracking-[0.1em] uppercase transition-all duration-300 shadow-md hover:shadow-lg border border-[#8C241C] cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto min-w-[170px]"
                       >
-                        <i className="fa-solid fa-circle-check"></i>
-                        {lang === "zh" ? "收下此卜" : lang === "fil" ? "Tanggapin ang Biyaya" : "Receive Blessing"}
+                        <i className="fa-solid fa-circle-check text-base sm:text-lg text-amber-200"></i>
+                        <span>
+                          {lang === "zh" ? "收下此卜" : lang === "fil" ? "Tanggapin ang Biyaya" : "Receive Blessing"}
+                        </span>
                       </button>
                     </div>
-                    <p className="text-xs text-[#5C3317] font-bold tracking-widest mt-1">
+                    <p className="text-xs sm:text-sm text-[#5C3317] font-semibold tracking-widest mt-1">
                       {lang === "zh" ? "收下此卜，遇見更好的自己" : lang === "fil" ? "Tanggapin ang biyayang ito upang makahanap ng mas magandang landas" : "Receive this blessing to find a better path"}
                     </p>
                   </div>
@@ -1241,6 +1299,68 @@ export default function App() {
               <div className="scroll-rod rod-right"></div>
             </div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* 全螢幕圖片放大檢視 Lightbox (Fullscreen Image Lightbox Modal - Instant Direct Display) */}
+      <AnimatePresence>
+        {enlargedImgUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-between p-4 sm:p-6 select-none cursor-pointer backdrop-blur-[8px]"
+            style={{ backgroundColor: 'rgba(20, 15, 10, 0.85)' }}
+            onClick={() => setEnlargedImgUrl(null)}
+          >
+            {/* 頂部控制列 (Senior-Friendly Close Header) */}
+            <div 
+              className="w-full max-w-4xl flex items-center justify-between z-10 pt-2 px-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2.5 text-[#E2C792] font-serif text-base sm:text-lg md:text-xl font-bold">
+                <i className="fa-solid fa-image text-amber-300 text-lg"></i>
+                <span>{lang === "zh" ? "星雲法語" : lang === "fil" ? "Larawan ng Salita ng Dharma" : "Dharma Word Artwork"}</span>
+              </div>
+
+              {/* 極大且清晰的 ✕ 關閉按鈕 (High contrast 24px icon with gold border) */}
+              <button
+                onClick={() => setEnlargedImgUrl(null)}
+                className="px-4 py-2 rounded-full bg-[#2B1D1D] hover:bg-[#3E2723] text-[#F5E6C8] border-2 border-[#E2C792] flex items-center gap-2 text-xl sm:text-2xl font-bold transition-all active:scale-95 shadow-2xl cursor-pointer"
+                aria-label="Close modal"
+              >
+                <i className="fa-solid fa-xmark text-2xl text-amber-200"></i>
+                <span className="text-base sm:text-lg">{lang === "zh" ? "關閉" : lang === "fil" ? "Isara" : "Close"}</span>
+              </button>
+            </div>
+
+            {/* 核心大圖：寬度 90% (手機端) / 最大 800px (電腦端)，保持原始比例 */}
+            <div 
+              className="relative flex-1 w-full max-w-[800px] my-auto flex items-center justify-center p-2 sm:p-4 overflow-hidden"
+              onClick={() => setEnlargedImgUrl(null)}
+            >
+              <motion.img
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                src={enlargedImgUrl}
+                alt="Enlarged Zen Wisdom Artwork"
+                className="w-[90vw] max-w-[800px] max-h-[80vh] sm:max-h-[84vh] object-contain rounded-2xl shadow-[0_16px_50px_rgba(0,0,0,0.9)] border-2 border-[#E2C792] bg-[#140C0A]"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+              />
+            </div>
+
+            {/* 底部提示與關閉指引 */}
+            <div className="w-full text-center pb-3 z-10 px-2">
+              <span className="inline-flex items-center gap-2.5 bg-[#1A100C]/90 border border-[#D4AF37] text-[#F5E6C8] text-sm sm:text-base md:text-lg font-bold px-6 py-2.5 rounded-full shadow-2xl backdrop-blur-md">
+                <i className="fa-solid fa-hand-pointer text-amber-300 text-lg"></i>
+                <span>{lang === "zh" ? "點擊任意處即可關閉放大" : lang === "fil" ? "I-click kahit saan para isara" : "Click anywhere to close"}</span>
+              </span>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1261,18 +1381,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* 底部極簡裝飾 (Decorative Zen Footer) */}
-      <footer className="mt-8 w-full max-w-2xl flex justify-between items-center px-4 z-10 text-white/30 text-[9px] tracking-widest uppercase">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center">
-            <div className="w-1 h-1 bg-white/40 rounded-full mx-[1px]"></div>
-            <div className="w-1 h-2 bg-white/40 rounded-full mx-[1px]"></div>
-            <div className="w-1 h-3 bg-white/40 rounded-full mx-[1px]"></div>
-          </div>
-          <span>{lang === "zh" ? "氛圍：幽雅靜謐" : lang === "fil" ? "Kapaligiran: Tahimik at Payapa" : "Atmosphere: Calm & Serene"}</span>
-        </div>
-        <span>{lang === "zh" ? "一葦航，心如水" : lang === "fil" ? "Gagabayan ng Karunungan" : "Guided by Wisdom"}</span>
-      </footer>
+
 
 
 

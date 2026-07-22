@@ -539,72 +539,77 @@ export const SINGLE_FILE_HTML_TEMPLATE = `<!doctype html>
           <p class="text-xs md:text-sm tracking-[0.35em] uppercase mb-1.5 font-bold font-sans text-[#E2C792]">
             HUMANISTIC DHARMA
           </p>
-          <h1 class="text-2xl md:text-4xl font-bold text-[#F5E6C8] font-serif tracking-wider drop-shadow-md">
+          <h1 class="text-2xl md:text-4xl lg:text-5xl font-extrabold text-[#F5E6C8] font-serif tracking-wider drop-shadow-md">
             星雲大師 • 星雲法語
           </h1>
-          <div class="w-16 h-[2px] bg-[#E2C792] mx-auto my-2.5"></div>
+          <div class="w-20 h-[2.5px] bg-[#E2C792] mx-auto my-2.5"></div>
           
-          <h2 id="mainTitle" class="text-sm md:text-base font-serif text-[#E2C792] font-bold tracking-widest text-center">
+          <h2 id="mainTitle" class="text-base md:text-xl lg:text-2xl font-serif text-[#E2C792] font-extrabold tracking-widest text-center">
             佛光山開山祖師星雲大師
           </h2>
         </div>
 
-        <!-- 提示訊息顯眼膠囊標籤 (High Visibility Status Pill) -->
-        <div class="mt-4 inline-block">
-          <p id="subTitle" class="text-sm md:text-base text-[#F5E6C8] font-bold tracking-wide text-center bg-[#2B1D1D]/90 border-2 border-[#E2C792] px-6 py-2.5 rounded-full shadow-2xl backdrop-blur-md">
-            — 點擊玻璃圓球，抽取人生卜筮 —
+        <!-- 提示訊息顯眼膠囊標籤 (Refined Zen Status Pill for Seniors) -->
+        <div class="mt-4 inline-block max-w-full px-2">
+          <p id="subTitle" class="text-sm sm:text-base md:text-lg text-[#F5E6C8] font-bold tracking-wide text-center px-5 py-2.5 sm:px-6 sm:py-2.5 rounded-full shadow-lg backdrop-blur-md leading-relaxed text-balance [word-break:keep-all] break-normal" style="background: rgba(0, 0, 0, 0.35); border: 1px solid #D4AF37;">
+            👉 點擊玻璃圓球，抽取人生法語 👈
           </p>
         </div>
       </div>
     </div>
 
-    <!-- 磨砂玻璃彈窗 (High Contrast & Large Fonts) -->
+    <!-- 磨砂玻璃彈窗 (Refined Zen Style with High Contrast for Seniors) -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-[6px] z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-500" style="perspective: 1200px;">
       
       <!-- 彈窗本體 -->
-      <div id="modalContent" class="glass-modal w-full max-w-lg rounded-3xl p-6 md:p-8 flex flex-col items-center text-center shadow-3xl relative overflow-hidden text-[#2B1D1D] bg-[#FDF8EB]">
+      <div id="modalContent" class="glass-modal w-full max-w-lg rounded-3xl p-6 md:p-8 flex flex-col items-center text-center shadow-3xl relative overflow-hidden text-[#1A1A1A] bg-[#FDF8EB]">
         
-        <div class="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#8C4F2B]/10 to-transparent pointer-events-none"></div>
-        <div id="chitIdTracker" class="absolute top-6 right-8 text-xs tracking-widest uppercase font-mono text-[#2B1D1D] font-bold bg-[#FDF8EB]/90 px-2 py-0.5 rounded border border-[#BD9A7A]/50">
+        <div class="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#8C241C]/10 to-transparent pointer-events-none"></div>
+        <div id="chitIdTracker" class="absolute top-6 right-8 text-xs tracking-widest uppercase font-mono text-[#1A1A1A] font-bold bg-[#FDF8EB]/90 px-2 py-0.5 rounded border border-[#BD9A7A]/50">
           CHIT #1
         </div>
 
         <!-- 圖片容器 -->
-        <div class="w-full h-60 md:h-64 rounded-2xl mb-4 overflow-hidden shadow-2xl relative flex items-center justify-center border-2 border-[#BD9A7A] p-1 bg-[#FCF9F2]">
+        <div class="w-full h-60 md:h-64 rounded-2xl mb-4 overflow-hidden shadow-xl relative flex items-center justify-center border border-[#BD9A7A] p-1 bg-[#FCF9F2]">
           <img id="chitImg" src="" alt="Zen Wisdom" class="w-full h-full object-contain rounded-xl select-none">
         </div>
 
-        <div class="text-xs md:text-sm tracking-[0.3em] text-[#8C4F2B] uppercase mb-1 font-bold">
+        <div class="text-sm sm:text-base md:text-lg tracking-[0.2em] text-[#8C241C] uppercase mb-1 font-bold">
           • 星雲法語 •
         </div>
 
-        <h2 class="text-xl md:text-2xl font-bold text-[#2B1D1D] font-serif mb-1">
+        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-[#8C241C] font-serif mb-1">
           佛光山開山祖師星雲大師
         </h2>
 
-        <div class="w-16 h-[2px] bg-[#BD9A7A]/50 mb-4"></div>
+        <div class="w-16 h-[1.5px] bg-[#8C241C]/40 mb-4"></div>
 
         <!-- 籤詩內容 -->
         <div class="space-y-3 px-2 mb-6 z-10 w-full">
-          <h3 id="chitFrench" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#2B1D1D] font-serif leading-[1.8] px-2 tracking-[1.5px] drop-shadow-sm">
+          <h3 id="chitFrench" class="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] font-serif leading-[1.8] px-2 tracking-[1.5px] drop-shadow-sm text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
             ...
           </h3>
-          <p id="chitChinese" class="text-sm sm:text-base md:text-lg font-bold text-[#8C4F2B] tracking-wide">
+          <p id="chitChinese" class="text-base sm:text-lg md:text-xl font-bold text-[#8C241C] tracking-wide text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
             ...
           </p>
-          <div class="text-sm sm:text-base md:text-lg font-extrabold text-[#8C4F2B] uppercase tracking-widest pt-2">
+          <div class="text-sm sm:text-base md:text-lg font-bold text-[#8C241C] uppercase tracking-[0.15em] pt-2">
             【 今日開示 】
           </div>
-          <p id="chitInterpretation" class="text-sm sm:text-base md:text-lg text-[#2B1D1D] font-bold leading-[1.9] text-center pt-1 max-w-md mx-auto tracking-[0.5px]">
+          <p id="chitInterpretation" class="text-base sm:text-lg md:text-xl text-[#1A1A1A] font-semibold leading-[1.8] text-center pt-1 max-w-md mx-auto tracking-[0.5px] text-pretty text-balance [word-break:keep-all] overflow-wrap:break-word break-normal">
             ...
           </p>
         </div>
 
-        <div class="w-full border-t-2 border-[#BD9A7A]/30 pt-4 flex flex-col items-center z-10">
-          <button id="closeBtn" class="bg-[#2B1D1D] hover:bg-[#3E2723] text-[#F5E6C8] active:scale-95 px-8 py-3 rounded-full text-xs md:text-sm tracking-[0.2em] uppercase transition-all duration-300 shadow-xl font-bold border-2 border-[#E2C792]">
-            收下此卜
-          </button>
-          <p class="text-xs text-[#5C3317] font-bold tracking-widest mt-3">
+        <div class="w-full border-t border-[#BD9A7A]/35 pt-4 flex flex-col items-center z-10 gap-3">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
+            <button id="saveCardBtn" class="bg-[#FDF8EB]/90 hover:bg-[#F7EED8] text-[#8C241C] active:scale-95 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-base sm:text-lg font-bold tracking-[0.1em] transition-all duration-300 shadow-sm border border-[#8C241C]/60 min-w-[170px]">
+              保存法語圖卡
+            </button>
+            <button id="closeBtn" class="bg-[#8C241C] hover:bg-[#721C16] text-[#FFF8E7] active:scale-95 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-base sm:text-lg font-bold tracking-[0.1em] uppercase transition-all duration-300 shadow-md border border-[#8C241C] min-w-[170px]">
+              收下此卜
+            </button>
+          </div>
+          <p class="text-xs sm:text-sm text-[#5C3317] font-semibold tracking-widest mt-1">
             收下此卜，遇見更好的自己
           </p>
         </div>
@@ -613,18 +618,7 @@ export const SINGLE_FILE_HTML_TEMPLATE = `<!doctype html>
 
   </div>
 
-  <!-- 底部裝飾 -->
-  <footer class="mt-8 w-full max-w-2xl flex justify-between items-center px-4 z-10 text-white/30 text-[9px] tracking-widest uppercase">
-    <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center">
-        <div class="w-1 h-1 bg-white/40 rounded-full mx-[1px]"></div>
-        <div class="w-1 h-2 bg-white/40 rounded-full mx-[1px]"></div>
-        <div class="w-1 h-3 bg-white/40 rounded-full mx-[1px]"></div>
-      </div>
-      <span>Atmosphère: Calme</span>
-    </div>
-    <span>Propulsé par la Sérénité</span>
-  </footer>
+
 
   <script>
     const SPREADSHEET_ID = "YOUR_GOOGLE_SHEET_ID_HERE";
