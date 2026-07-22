@@ -533,76 +533,80 @@ export const SINGLE_FILE_HTML_TEMPLATE = `<!doctype html>
       <!-- 案幾底木座 -->
       <div class="w-80 h-3 altar-table rounded-full opacity-65 mb-6 shadow-md border-t border-white/5 pointer-events-none"></div>
 
-      <!-- 東方禪意標題 -->
-      <div class="text-center mt-2 z-10">
-        <p class="text-[10px] tracking-[0.42em] uppercase mb-1 opacity-50 text-amber-200/60">
-          La Divination de la Vie
-        </p>
-        <h1 class="text-2xl md:text-3xl font-light italic text-[#FDFCFC] font-serif tracking-wider">
-          Sagesse du Jour
-        </h1>
-        <div class="w-10 h-[1.5px] bg-amber-400/50 mx-auto my-3"></div>
-        
-        <h2 id="mainTitle" class="text-sm font-serif text-[#EAE3DB] font-medium tracking-widest text-center uppercase">
-          人生卜筮系統
-        </h2>
-        <p id="subTitle" class="text-[11px] text-amber-200/40 tracking-widest text-center mt-3 font-light min-h-[20px]">
-          — 點擊玻璃圓球，抽取人生卜筮 —
-        </p>
+      <!-- 東方禪意標題 (High Contrast & Large Fonts for Seniors) -->
+      <div class="text-center mt-3 z-10 w-full px-2">
+        <div class="bg-[#2B1D1D]/80 border-2 border-[#E2C792]/50 backdrop-blur-md px-5 py-4.5 rounded-2xl shadow-2xl max-w-lg mx-auto">
+          <p class="text-xs md:text-sm tracking-[0.35em] uppercase mb-1.5 font-bold font-sans text-[#E2C792]">
+            HUMANISTIC DHARMA
+          </p>
+          <h1 class="text-2xl md:text-4xl font-bold text-[#F5E6C8] font-serif tracking-wider drop-shadow-md">
+            星雲大師 • 星雲法語
+          </h1>
+          <div class="w-16 h-[2px] bg-[#E2C792] mx-auto my-2.5"></div>
+          
+          <h2 id="mainTitle" class="text-sm md:text-base font-serif text-[#E2C792] font-bold tracking-widest text-center">
+            佛光山開山祖師星雲大師
+          </h2>
+        </div>
+
+        <!-- 提示訊息顯眼膠囊標籤 (High Visibility Status Pill) -->
+        <div class="mt-4 inline-block">
+          <p id="subTitle" class="text-sm md:text-base text-[#F5E6C8] font-bold tracking-wide text-center bg-[#2B1D1D]/90 border-2 border-[#E2C792] px-6 py-2.5 rounded-full shadow-2xl backdrop-blur-md">
+            — 點擊玻璃圓球，抽取人生卜筮 —
+          </p>
+        </div>
       </div>
     </div>
 
-    <!-- 磨砂玻璃彈窗 -->
-    <div id="modalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-[5px] z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-500" style="perspective: 1200px;">
+    <!-- 磨砂玻璃彈窗 (High Contrast & Large Fonts) -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-[6px] z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-500" style="perspective: 1200px;">
       
       <!-- 彈窗本體 -->
-      <div id="modalContent" class="glass-modal w-full max-w-lg rounded-3xl p-6 md:p-10 flex flex-col items-center text-center shadow-3xl relative overflow-hidden text-[#EAE3DB]">
+      <div id="modalContent" class="glass-modal w-full max-w-lg rounded-3xl p-6 md:p-8 flex flex-col items-center text-center shadow-3xl relative overflow-hidden text-[#2B1D1D] bg-[#FDF8EB]">
         
-        <div class="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none"></div>
-        <div id="chitIdTracker" class="absolute top-6 right-8 text-[9px] tracking-widest uppercase opacity-40 font-mono text-amber-200">
+        <div class="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#8C4F2B]/10 to-transparent pointer-events-none"></div>
+        <div id="chitIdTracker" class="absolute top-6 right-8 text-xs tracking-widest uppercase font-mono text-[#2B1D1D] font-bold bg-[#FDF8EB]/90 px-2 py-0.5 rounded border border-[#BD9A7A]/50">
           CHIT #1
         </div>
 
         <!-- 圖片容器 -->
-        <div class="w-full h-60 md:h-64 rounded-2xl mb-6 overflow-hidden shadow-2xl relative flex items-center justify-center border-2 border-amber-400/20 p-1 bg-black/20">
-          <img id="chitImg" src="" alt="Zen Wisdom" class="w-full h-full object-cover rounded-xl select-none">
+        <div class="w-full h-60 md:h-64 rounded-2xl mb-4 overflow-hidden shadow-2xl relative flex items-center justify-center border-2 border-[#BD9A7A] p-1 bg-[#FCF9F2]">
+          <img id="chitImg" src="" alt="Zen Wisdom" class="w-full h-full object-contain rounded-xl select-none">
         </div>
 
-        <div class="text-[9px] tracking-[0.3em] text-amber-400 uppercase mb-1.5 font-sans">
-          LA DIVINATION DE LA VIE
+        <div class="text-xs md:text-sm tracking-[0.3em] text-[#8C4F2B] uppercase mb-1 font-bold">
+          • 星雲法語 •
         </div>
 
-        <h2 class="text-2xl md:text-3xl font-light italic text-[#FDFCFC] font-serif mb-1">
-          Sagesse du Jour
+        <h2 class="text-xl md:text-2xl font-bold text-[#2B1D1D] font-serif mb-1">
+          佛光山開山祖師星雲大師
         </h2>
 
-        <div class="text-[10px] font-serif text-[#EAE3DB]/50 tracking-[0.25em] uppercase mb-4">
-          人生卜筮系統
-        </div>
-
-        <div class="w-8 h-[1px] bg-amber-400/40 mb-4"></div>
+        <div class="w-16 h-[2px] bg-[#BD9A7A]/50 mb-4"></div>
 
         <!-- 籤詩內容 -->
-        <div class="space-y-3.5 px-2 mb-6 z-10">
-          <h3 id="chitFrench" class="text-base md:text-lg italic text-[#FDFCFC] font-serif leading-relaxed px-2">
+        <div class="space-y-3 px-2 mb-6 z-10 w-full">
+          <h3 id="chitFrench" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#2B1D1D] font-serif leading-[1.8] px-2 tracking-[1.5px] drop-shadow-sm">
             ...
           </h3>
-          <p id="chitChinese" class="text-xs md:text-sm font-medium text-amber-300 tracking-wide">
+          <p id="chitChinese" class="text-sm sm:text-base md:text-lg font-bold text-[#8C4F2B] tracking-wide">
             ...
           </p>
-          <p id="chitInterpretation" class="text-xs text-[#EAE3DB]/70 leading-relaxed text-center font-light pt-2 max-w-sm mx-auto">
+          <div class="text-sm sm:text-base md:text-lg font-extrabold text-[#8C4F2B] uppercase tracking-widest pt-2">
+            【 今日開示 】
+          </div>
+          <p id="chitInterpretation" class="text-sm sm:text-base md:text-lg text-[#2B1D1D] font-bold leading-[1.9] text-center pt-1 max-w-md mx-auto tracking-[0.5px]">
             ...
           </p>
         </div>
 
-        <div class="w-full border-t border-white/10 pt-4 flex flex-col items-center z-10">
-          <p class="text-[10px] text-amber-200/40 tracking-widest mb-4">
-            收下此卜，遇見更好的自己
-          </p>
-
-          <button id="closeBtn" class="bg-gradient-to-r from-amber-500 to-yellow-600 text-neutral-900 hover:brightness-110 active:scale-95 px-10 py-3 rounded-full text-xs tracking-[0.2em] uppercase transition-all duration-300 shadow-xl font-semibold">
+        <div class="w-full border-t-2 border-[#BD9A7A]/30 pt-4 flex flex-col items-center z-10">
+          <button id="closeBtn" class="bg-[#2B1D1D] hover:bg-[#3E2723] text-[#F5E6C8] active:scale-95 px-8 py-3 rounded-full text-xs md:text-sm tracking-[0.2em] uppercase transition-all duration-300 shadow-xl font-bold border-2 border-[#E2C792]">
             收下此卜
           </button>
+          <p class="text-xs text-[#5C3317] font-bold tracking-widest mt-3">
+            收下此卜，遇見更好的自己
+          </p>
         </div>
       </div>
     </div>
