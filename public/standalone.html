@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星雲法語 - 人生卜事系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: radial-gradient(circle at center, #2B1D1D 0%, #150C0C 100%);
+      color: #F5E6C8;
+      font-family: 'Noto Serif TC', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .header-box {
+      background: rgba(43, 29, 29, 0.85);
+      border: 1px solid rgba(226, 199, 146, 0.5);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-top: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      width: 100%;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #E2C792;
+      letter-spacing: 0.25em;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .main-title {
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 900;
+      color: #F5E6C8;
+      white-space: nowrap;
+      margin: 4px 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .divider {
+      width: 80px;
+      height: 2px;
+      background: rgba(226, 199, 146, 0.8);
+      margin: 8px auto;
+    }
+    .author-title {
+      font-size: clamp(13px, 3.5vw, 17px);
+      color: #E2C792;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .hint-badge {
+      margin-top: 15px;
+      background: rgba(43, 29, 29, 0.75);
+      border: 1px solid #D4AF37;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s ease;
+    }
+    .hint-badge:hover {
+      transform: scale(1.03);
+    }
+    .hint-badge:active {
+      transform: scale(0.97);
+    }
+    .hint-text {
+      font-size: clamp(14px, 4vw, 18px);
+      font-weight: 800;
+      color: #F5E6C8;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      background-color: #FFD700;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #FFD700;
+    }
+    #canvas-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 10px auto;
+      cursor: pointer;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+    /* Scroll Popover Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 15, 10, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .scroll-card {
+      background: #FDF8EB;
+      color: #2B1D1D;
+      border-radius: 12px;
+      max-width: 440px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      border: 2px solid #E2C792;
+      text-align: center;
+      position: relative;
+    }
+    .scroll-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #8B1E1E;
+      margin-bottom: 12px;
+    }
+    .scroll-image {
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 12px 0;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .scroll-content {
+      font-size: 18px;
+      line-height: 1.8;
+      font-weight: 700;
+      color: #2B1D1D;
+      margin: 16px 0;
+    }
+    .btn-close {
+      background: linear-gradient(135deg, #8B1E1E, #5C1212);
+      color: #F5E6C8;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="canvas-container">
+      <canvas id="nebulaCanvas" width="360" height="360"></canvas>
+    </div>
+
+    <div class="hint-badge" id="hintBadge">
+      <div class="dot"></div>
+      <div class="hint-text" id="hintText">👉 輕點點點星光，抽取今日星雲法語</div>
+    </div>
+
+    <div class="header-box">
+      <div class="main-title">Dharma Words from Venerable Master Hsing Yun</div>
+      <div class="divider"></div>
+      <div class="author-title">佛光山開山祖師星雲大師 • 星雲法語</div>
+    </div>
+  </div>
+
+  <!-- Modal Popover -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="scroll-card">
+      <div class="scroll-title" id="chitTitle">星雲法語</div>
+      <img id="chitImage" class="scroll-image" src="" alt="法語圖" />
+      <div class="scroll-content" id="chitContent">慈悲偉大的佛陀，請給予我無上的智慧與光明...</div>
+      <button class="btn-close" id="btnClose">收下此卜</button>
+    </div>
+  </div>
+
+  <script>
+    // Sample Chits Data
+    const chits = [
+      { id: 1, title: "慈悲包容", content: "慈悲是宇宙間最偉大的力量，能化解一切干戈與執著。", image: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, title: "心如大海", content: "心量有多大，事業就有多大；包容有多廣，成就就有多高。", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
+      { id: 3, title: "行善積德", content: "身做好事，口說好話，心存好意，即是世間最圓滿的修行。", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" }
+    ];
+
+    let animState = 'idle'; // idle | condensing | ascending
+    let condenseProgress = 0;
+    let ascendProgress = 0;
+    let rotX = 0, rotY = 0;
+    let time = 0;
+
+    // Web Audio API Singing Bowl
+    function playSingingBowl() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        const partials = [
+          { freq: 216, gain: 0.35, decay: 3.5 },
+          { freq: 432, gain: 0.28, decay: 3.0 },
+          { freq: 576, gain: 0.18, decay: 2.4 },
+          { freq: 864, gain: 0.12, decay: 1.8 }
+        ];
+        partials.forEach(p => {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(p.freq, now);
+          gainNode.gain.setValueAtTime(0.001, now);
+          gainNode.gain.linearRampToValueAtTime(p.gain, now + 0.06);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, now + p.decay);
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + p.decay + 0.1);
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    // Canvas Setup
+    const canvas = document.getElementById('nebulaCanvas');
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const particleCount = 280;
+
+    for (let i = 0; i < particleCount; i++) {
+      const theta = Math.acos(1 - (2 * (i + 0.5)) / particleCount);
+      const phi = Math.PI * (1 + Math.sqrt(5)) * i;
+      const r = 95 * Math.pow(Math.random(), 0.33);
+      particles.push({
+        x: r * Math.sin(theta) * Math.cos(phi),
+        y: r * Math.sin(theta) * Math.sin(phi),
+        z: r * Math.cos(theta),
+        origR: r,
+        theta, phi,
+        size: 1.8 + Math.random() * 2.2,
+        color: Math.random() > 0.5 ? '#FFB6C1' : '#FFD700'
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.016;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      if (animState === 'idle') {
+        rotY += 0.005;
+        rotX += 0.002;
+      } else if (animState === 'condensing') {
+        rotY += 0.035;
+        condenseProgress = Math.min(1, condenseProgress + 0.018);
+      } else if (animState === 'ascending') {
+        ascendProgress = Math.min(1, ascendProgress + 0.022);
+      }
+
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+      let mult = animState === 'idle' ? 1 + 0.04 * Math.sin(time * 2) : (1 - Math.pow(condenseProgress, 2.5) * 0.95);
+
+      particles.forEach(p => {
+        const curR = p.origR * mult;
+        let px = curR * Math.sin(p.theta) * Math.cos(p.phi);
+        let py = curR * Math.sin(p.theta) * Math.sin(p.phi);
+        let pz = curR * Math.cos(p.theta);
+
+        let x1 = px * cosY - pz * sinY;
+        let z1 = px * sinY + pz * cosY;
+        let y2 = py * cosX - z1 * sinX;
+        let z2 = py * sinX + z1 * cosX;
+
+        const scale = 320 / (320 + z2);
+        const sx = centerX + x1 * scale;
+        const sy = centerY + y2 * scale;
+
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.max(1, p.size * scale), 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Super-Radiant White-Gold Energy Core
+      if (animState === 'condensing' && condenseProgress > 0.4) {
+        const coreAlpha = Math.min(1, (condenseProgress - 0.4) / 0.5);
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = coreAlpha;
+
+        const outerGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 75);
+        outerGlow.addColorStop(0, "rgba(255, 255, 255, 1)");
+        outerGlow.addColorStop(0.3, "rgba(255, 220, 130, 0.9)");
+        outerGlow.addColorStop(0.7, "rgba(255, 160, 90, 0.4)");
+        outerGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+        ctx.fillStyle = outerGlow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 75, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.shadowColor = "#FFD700";
+        ctx.shadowBlur = 30;
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        const rayLen = 50 * coreAlpha;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-rayLen, 0); ctx.lineTo(rayLen, 0);
+        ctx.moveTo(0, -rayLen); ctx.lineTo(0, rayLen);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      if (animState === 'ascending') {
+        const ascendY = centerY - ascendProgress * 160;
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(centerX, ascendY, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (ascendProgress >= 0.98) {
+          revealChit();
+        }
+      }
+
+      requestAnimationFrame(render);
+    }
+    render();
+
+    function triggerDraw() {
+      if (animState !== 'idle') return;
+      playSingingBowl();
+      animState = 'condensing';
+      condenseProgress = 0;
+      ascendProgress = 0;
+      document.getElementById('hintText').innerText = '✨ 誠心祈福中，為您凝聚智慧...';
+
+      setTimeout(() => {
+        animState = 'ascending';
+        document.getElementById('hintText').innerText = '🌸 靈感降臨，正在為您打開法語...';
+      }, 1000);
+    }
+
+    function revealChit() {
+      animState = 'idle';
+      const randomChit = chits[Math.floor(Math.random() * chits.length)];
+      document.getElementById('chitTitle').innerText = randomChit.title;
+      document.getElementById('chitContent').innerText = randomChit.content;
+      document.getElementById('chitImage').src = randomChit.image;
+      document.getElementById('modalOverlay').classList.add('active');
+      document.getElementById('hintText').innerText = '👉 輕點點點星光，抽取今日星雲法語';
+    }
+
+    document.getElementById('canvas-container').addEventListener('click', triggerDraw);
+    document.getElementById('hintBadge').addEventListener('click', triggerDraw);
+    document.getElementById('btnClose').addEventListener('click', () => {
+      document.getElementById('modalOverlay').classList.remove('active');
+    });
+  </script>
+</body>
+</html>

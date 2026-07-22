@@ -7,6 +7,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Chit } from "./types";
 import { DEFAULT_CHITS } from "./data";
+import { ParticleNebulaCanvas } from "./components/ParticleNebulaCanvas";
 
 interface ScrollData {
   id: number;
@@ -50,6 +51,62 @@ export default function App() {
   const [enlargedImgUrl, setEnlargedImgUrl] = useState<string | null>(null);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; vx: number; vy: number; scale: number; delay: number }>>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [nebulaAnimState, setNebulaAnimState] = useState<"idle" | "condensing" | "ascending">("idle");
+
+  // Particle Nebula Extraction Logic (3-Stage Particle Condensation & Ascension)
+  const handleNebulaDraw = () => {
+    if (nebulaAnimState !== "idle" || showModal || isPreloading) return;
+
+    // 1. Randomly pick a chit
+    const luckyChit = chits[Math.floor(Math.random() * chits.length)];
+    setIsPreloading(true);
+    setSelectedChit(null);
+
+    let isImgLoaded = false;
+    let isAscendFinished = false;
+
+    // 2. Preload image in background
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    const checkAndReveal = () => {
+      if (isImgLoaded && isAscendFinished) {
+        setIsPreloading(false);
+        setSelectedChit(luckyChit);
+        setShowModal(true);
+        setIsScrollUnrolled(false);
+        playZenReveal();
+        setTimeout(() => {
+          setIsScrollUnrolled(true);
+          setNebulaAnimState("idle");
+        }, 120);
+      }
+    };
+
+    img.onload = () => {
+      isImgLoaded = true;
+      checkAndReveal();
+    };
+    img.onerror = () => {
+      isImgLoaded = true;
+      checkAndReveal();
+    };
+    img.src = luckyChit.image_url;
+
+    // Phase 1: Condensing 0.0s ~ 1.0s
+    setNebulaAnimState("condensing");
+
+    // Phase 2: Ascending 1.0s ~ 2.0s
+    setTimeout(() => {
+      setNebulaAnimState("ascending");
+    }, 1000);
+
+    // Phase 3: Flight finished
+    setTimeout(() => {
+      isAscendFinished = true;
+      checkAndReveal();
+    }, 2000);
+  };
 
   // 自動清除 Toast 消息
   useEffect(() => {
@@ -766,311 +823,23 @@ export default function App() {
         </button>
       </div>
 
-      {/* 居中神聖案几容器 (Main Altar Stage) */}
-      <div id="postcard-frame" className="relative z-10 w-full max-w-md flex flex-col items-center justify-center min-h-[580px] transition-all duration-300">
+      {/* 居中神聖案几容器 (Main Altar Stage with 3D Particle Nebula) */}
+      <div id="postcard-frame" className="relative z-10 w-full max-w-md flex flex-col items-center justify-center min-h-[520px] transition-all duration-300">
         
-        {/* 核心內容區 (Core Scene) */}
-        <div id="core-content" className="flex flex-col items-center justify-center my-auto py-6 w-full relative">
+        {/* 核心內容區：3D Particle Nebula Canvas Stage */}
+        <div id="core-content" className="flex flex-col items-center justify-center my-auto py-2 w-full relative">
           
-          {/* 【高度逼真、全透明的玻璃圓球容器籤筒】組件結構 */}
-          <div 
-            id="pot-container"
-            onClick={handleDraw}
-            className="relative w-72 h-80 mb-6 select-none cursor-pointer group flex items-center justify-center animate-fade-in"
-          >
-            {/* 案几桌面投影 */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-52 h-4 bg-black/50 rounded-full blur-[10px] z-0 pointer-events-none transition-transform duration-300 group-hover:scale-105"></div>
+          {/* 3D 粒子星雲動態引擎 */}
+          <ParticleNebulaCanvas
+            isMuted={isMuted}
+            onStartExtraction={handleNebulaDraw}
+            animState={nebulaAnimState}
+            onAscensionComplete={() => {}}
+            lang={lang}
+          />
 
-            {/* 圓形斜口玻璃球外框 (Crystal Clear Glass Sphere - NOT FROSTED) */}
-            <div
-              id="glass-sphere"
-              className="absolute bottom-10 w-64 h-36 rounded-b-[128px] rounded-t-none border-b border-l border-r border-white/25 bg-gradient-to-b from-transparent via-white/5 to-white/10 shadow-[inset_0_-20px_40px_rgba(0,0,0,0.75),_0_20px_40px_rgba(0,0,0,0.6)] overflow-hidden z-20 flex items-center justify-center transition-all duration-300 group-hover:border-white/40 group-hover:shadow-[inset_0_-20px_45px_rgba(255,255,255,0.15),_0_25px_50px_rgba(212,163,115,0.15)]"
-            >
-              {/* 數百個 (堆疊 92 個) 精緻粉白相間紙捲軸 (Scrolls Pile - 92 Scrolls) */}
-              <div className={`absolute inset-0 z-10 pointer-events-none transition-all duration-300 ${isShaking ? "is-shaking-pool" : ""}`}>
-                {scrollsPile.map((sc) => {
-                  const leftPos = 128 + sc.x - 16;
-                  const topPos = sc.y - 6;
-                  return (
-                    <div
-                      key={sc.id}
-                      style={{
-                        left: `${leftPos}px`,
-                        top: `${topPos}px`,
-                        transform: `rotate(${sc.rotate}deg) scale(${sc.scale})`,
-                        '--rot': `${sc.rotate}deg`,
-                      } as React.CSSProperties}
-                      className={`absolute w-8 h-3 rounded-full border border-black/15 shadow-[0_1.5px_3px_rgba(0,0,0,0.3)] transition-all duration-300 z-10 ${
-                        sc.colorType === 'pink'
-                          ? "bg-gradient-to-r from-[#FFD2CC] via-[#FFA899] to-[#FFC4BA]"
-                          : "bg-gradient-to-r from-[#FFFDFD] via-[#F4E3E0] to-[#FFFDFD]"
-                      } ${isShaking ? "is-shaking-scroll" : ""}`}
-                    >
-                      {/* 紙邊捲曲層次 */}
-                      <div className="absolute inset-y-0 left-0.5 w-[2px] bg-black/10 rounded-full"></div>
-                      <div className="absolute inset-y-0 right-0.5 w-[2px] bg-black/10 rounded-full"></div>
-                      
-                      {/* 綁帶與細小裝飾線 */}
-                      <div className={`absolute inset-y-0 left-1/2 w-[2.2px] -translate-x-1/2 ${
-                        sc.colorType === 'pink' ? "bg-white/60" : "bg-red-400/80"
-                      }`}></div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* 玻璃球正面金色字樣與佛陀徽章 (Metallic Gold Leaf Curved Overlay) */}
-              <div className="absolute bottom-0 left-0 w-full h-64 z-25 pointer-events-none select-none">
-                <svg viewBox="0 0 256 256" className="w-full h-full">
-                  <defs>
-                    <linearGradient id="gold-leaf-gradient-render" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#FFE082" />
-                      <stop offset="30%" stopColor="#FFC107" />
-                      <stop offset="70%" stopColor="#FF8F00" />
-                      <stop offset="100%" stopColor="#FFE082" />
-                    </linearGradient>
-                    {/* Top text curved path */}
-                    <path id="curve-top-render" d="M 45,115 A 83,83 0 0,1 211,115" fill="none" />
-                    {/* Bottom text curved path */}
-                    <path id="curve-bottom-render" d="M 211,141 A 83,83 0 0,1 45,141" fill="none" />
-                  </defs>
-
-                  {/* 上方依半圓弧形彎曲中文字：「星雲法語」 */}
-                  <text className="font-serif text-[17px] font-semibold fill-[url(#gold-leaf-gradient-render)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] uppercase tracking-[6px]" textAnchor="middle">
-                    <textPath href="#curve-top-render" startOffset="50%">{lang === "zh" ? "星雲法語" : lang === "fil" ? "SALITA NG DHARMA" : "DHARMA WORDS"}</textPath>
-                  </text>
-
-                  {/* 下方依反向圓弧英文字：「DHARMA WORDS」 */}
-                  <text className="font-serif text-[8.5px] font-medium fill-[url(#gold-leaf-gradient-render)] drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] uppercase tracking-[3px]" textAnchor="middle">
-                    <textPath href="#curve-bottom-render" startOffset="50%">{lang === "zh" ? "DHARMA WORDS" : "HSING YUN"}</textPath>
-                  </text>
-                </svg>
-              </div>
-
-              {/* 玻璃球正中央淡雅、半透明金色佛陀徽章 */}
-              <div className="absolute bottom-0 left-0 w-full h-36 flex items-center justify-center z-25 pointer-events-none select-none opacity-25">
-                <svg className="w-12 h-12 text-amber-300 filter drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" viewBox="0 0 64 64" fill="currentColor">
-                  <circle cx="32" cy="16" r="4" />
-                  <path d="M32,20 C26,20 22,24 22,28 C22,32 26,34 32,38 C38,34 42,32 42,28 C42,24 38,20 32,20 Z" />
-                  <path d="M22,38 C18,41 16,45 16,48 C16,50 18,52 32,52 C46,52 48,50 48,48 C48,45 44,41 40,38 Z" stroke="white" strokeWidth="0.5" fill="none" />
-                </svg>
-              </div>
-
-              {/* 玻璃球表面反光與物理光斑 (Specular Reflection Highlights) */}
-              <div className="absolute inset-0 glass-specular-highlight pointer-events-none z-30 opacity-70"></div>
-              <div className="absolute top-4 left-6 w-14 h-6 bg-white/25 rounded-full rotate-[-30deg] blur-[1px] pointer-events-none z-30"></div>
-              <div className="absolute bottom-6 right-8 w-10 h-4 bg-white/5 rounded-full rotate-[-30deg] blur-[2px] pointer-events-none z-30"></div>
-            </div>
-
-            {/* 🌟 3D 橢圓立體瓶口：立體斜切橢圓 (Sibling of glass sphere to avoid overflow clipping) */}
-            <div className="bowl-opening"></div>
-
-            {/* 中央佛陀水晶： nestled in the scrolls pile, translucent pale pink crystal seated Buddha */}
-            <div className={`absolute left-[calc(50%-20px)] top-[172px] z-28 pointer-events-none select-none transition-transform duration-300 group-hover:scale-105 ${isShaking ? "is-shaking-pool" : ""}`}>
-              <svg viewBox="0 0 60 70" className="w-10 h-12 drop-shadow-[0_4px_8px_rgba(255,182,193,0.65)]">
-                <defs>
-                  <radialGradient id="crystal-pink-buddha" cx="50%" cy="40%" r="50%">
-                    <stop offset="0%" stopColor="rgba(255, 230, 235, 0.95)" />
-                    <stop offset="60%" stopColor="rgba(255, 182, 193, 0.7)" />
-                    <stop offset="100%" stopColor="rgba(255, 105, 180, 0.45)" />
-                  </radialGradient>
-                </defs>
-                {/* Seated Crystal Buddha Outline */}
-                <path d="M 12 55 Q 30 48, 48 55 Q 30 65, 12 55 Z" fill="url(#crystal-pink-buddha)" stroke="rgba(255,255,255,0.7)" strokeWidth="0.8" />
-                <path d="M 16 48 C 18 38, 42 38, 44 48 C 35 52, 25 52, 16 48 Z" fill="url(#crystal-pink-buddha)" stroke="rgba(255,255,255,0.6)" strokeWidth="0.6" />
-                <circle cx="30" cy="22" r="7.5" fill="url(#crystal-pink-buddha)" stroke="rgba(255,255,255,0.7)" strokeWidth="0.8" />
-                <path d="M 28 14 Q 30 11 32 14 Z" fill="url(#crystal-pink-buddha)" stroke="rgba(255,255,255,0.8)" />
-                {/* Hand Mudra shimmer */}
-                <circle cx="30" cy="45" r="2.5" fill="white" opacity="0.65" />
-              </svg>
-            </div>
-
-            {/* 精緻金色雕花佛像蓮花底座裝飾 (Gold Lotus Pedestal Base) */}
-            <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-48 h-10 z-10 select-none pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.5)]">
-              <svg viewBox="0 0 120 30" fill="currentColor" className="w-full h-full text-amber-500/80 drop-shadow-[0_4px_10px_rgba(212,163,115,0.4)]">
-                <path d="M60,2 C70,2 85,10 90,14 C80,14 70,12 60,10 C50,12 40,14 30,14 C35,10 50,2 60,2 Z" fill="#D4A373" className="brightness-125" />
-                <path d="M60,6 C75,6 95,14 105,20 C90,20 75,18 60,15 C45,18 30,20 15,20 C25,14 45,6 60,6 Z" fill="#C99C4A" />
-                <path d="M5,22 C15,22 25,25 60,25 C95,25 105,22 115,22 C110,26 95,30 60,30 C25,30 10,26 5,22 Z" fill="#9C7334" />
-              </svg>
-            </div>
-
-            {/* 精緻木紋鏡面案几桌面 (Reflective Altar Tabletop with Symmetric Mandala Stamps) */}
-            <div className="absolute bottom-0 inset-x-2 h-14 altar-table rounded-xl z-0 pointer-events-none overflow-hidden border-t border-white/10 shadow-2xl">
-              {/* 桌面高光邊 */}
-              <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
-              
-              {/* 鏡面反射效果 (CSS Reflection Mirror Overlay) */}
-              <div className="absolute inset-x-0 bottom-1 flex justify-center opacity-[0.14] blur-[3px] scale-y-[-0.65] -translate-y-4 pointer-events-none">
-                <div className="w-48 h-48 rounded-full border border-white/20 bg-gradient-to-b from-amber-500/20 to-transparent"></div>
-              </div>
-
-              {/* 左側：精緻對稱藍綠色曼陀羅花紋圖章 */}
-              <div className="absolute left-4 top-2 w-10 h-10 opacity-30 text-teal-400">
-                <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="50" cy="50" r="44" strokeDasharray="3,3" />
-                  <circle cx="50" cy="50" r="30" />
-                  <circle cx="50" cy="50" r="15" />
-                  <path d="M 50,6 L 50,94 M 6,50 L 94,50" />
-                  <path d="M 19,19 L 81,81 M 19,81 L 81,19" />
-                  <path d="M 50,20 C 53,28 47,28 50,20 Z" fill="currentColor" fillOpacity="0.2" />
-                  <path d="M 50,80 C 53,72 47,72 50,80 Z" fill="currentColor" fillOpacity="0.2" />
-                  <path d="M 20,50 C 28,53 28,47 20,50 Z" fill="currentColor" fillOpacity="0.2" />
-                  <path d="M 80,50 C 72,53 72,47 80,50 Z" fill="currentColor" fillOpacity="0.2" />
-                </svg>
-              </div>
-
-              {/* 右側：精緻對稱藍綠色曼陀羅花紋圖章 */}
-              <div className="absolute right-4 top-2 w-10 h-10 opacity-30 text-teal-400">
-                <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="50" cy="50" r="44" strokeDasharray="3,3" />
-                  <circle cx="50" cy="50" r="30" />
-                  <circle cx="50" cy="50" r="15" />
-                  <path d="M 50,6 L 50,94 M 6,50 L 94,50" />
-                  <path d="M 19,19 L 81,81 M 19,81 L 81,19" />
-                  <path d="M 50,20 C 53,28 47,28 50,20 Z" fill="currentColor" fillOpacity="0.2" />
-                  <path d="M 50,80 C 53,72 47,72 50,80 Z" fill="currentColor" fillOpacity="0.2" />
-                  <path d="M 20,50 C 28,53 28,47 20,50 Z" fill="currentColor" fillOpacity="0.2" />
-                  <path d="M 80,50 C 72,53 72,47 80,50 Z" fill="currentColor" fillOpacity="0.2" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Golden Sparkles Trail Layer */}
-            <div className="absolute inset-0 pointer-events-none z-30">
-              {particles.map((p) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ x: p.x, y: 130, scale: p.scale, opacity: 0 }}
-                  animate={{
-                    x: p.x + p.vx * 30,
-                    y: -140 + p.vy * 20,
-                    opacity: [0, 1, 0.8, 0],
-                    scale: [p.scale, p.scale * 1.5, p.scale * 0.5]
-                  }}
-                  transition={{ duration: 0.85, ease: "easeOut", delay: p.delay }}
-                  className="absolute left-1/2 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-300 to-amber-500 shadow-[0_0_8px_#F59E0B]"
-                />
-              ))}
-            </div>
-
-            {/* 飛升紙捲軸動畫組件 (Lucky Scroll Flying Path) */}
-            <AnimatePresence>
-              {luckyScrollFlying && (
-                <div className="absolute left-1/2 z-40" style={{ top: "110px" }}>
-                  {/* 1. 神聖金色蓮花光圈與同心圓 (Zen Healing Halo) */}
-                  <motion.div
-                    initial={{ y: 50, scale: 0, opacity: 0 }}
-                    animate={{
-                      y: -180,
-                      scale: [1, 1.4, 1.2],
-                      opacity: [0, 0.8, 0.9],
-                    }}
-                    transition={{ duration: 0.85, ease: "easeInOut" }}
-                    exit={{ scale: 1.8, opacity: 0 }}
-                    className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 w-28 h-28 pointer-events-none flex items-center justify-center"
-                  >
-                    {/* 第一層：外圍旋轉的金色神聖曼陀羅/蓮花花紋 */}
-                    <motion.svg
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                      className="w-full h-full text-amber-400/40"
-                      viewBox="0 0 100 100"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                    >
-                      {/* 繪製 8 瓣精緻蓮花瓣 */}
-                      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-                        <path
-                          key={angle}
-                          d="M 50,50 C 45,25 55,25 50,50 Z"
-                          transform={`rotate(${angle} 50 50)`}
-                          fill="currentColor"
-                          fillOpacity="0.04"
-                        />
-                      ))}
-                      {/* 同心圓 */}
-                      <circle cx="50" cy="50" r="40" strokeDasharray="3 3" />
-                      <circle cx="50" cy="50" r="32" strokeDasharray="1 1" />
-                      <circle cx="50" cy="50" r="24" />
-                    </motion.svg>
-
-                    {/* 第二層：呼吸起伏的溫潤金色光暈 */}
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.15, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                      className="absolute w-20 h-20 rounded-full bg-gradient-to-r from-amber-400/25 to-yellow-300/10 blur-md"
-                    />
-                  </motion.div>
-
-                  {/* 2. 智慧加載狀態文字：明示系統正在跑，非當機 (Dharma Preloading Elegant Text) */}
-                  <motion.div
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{
-                      y: -115, // 剛好在飛升到 -180 的捲軸下方 65px
-                      opacity: [0, 0.9, 1],
-                    }}
-                    transition={{ duration: 0.85, ease: "easeInOut" }}
-                    exit={{ opacity: 0 }}
-                    className="absolute left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap flex flex-col items-center gap-1.5"
-                  >
-                    {/* 精巧金色呼吸微光點 */}
-                    <div className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
-                      <span className="w-1 h-1 rounded-full bg-amber-300"></span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
-                    </div>
-                    {/* 古典禪意提示字，多國語言支援 */}
-                    <p className="text-[10px] md:text-[11px] font-serif tracking-[0.25em] text-amber-200/90 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] bg-black/45 px-3 py-1 rounded-full border border-amber-500/20 backdrop-blur-sm shadow-lg">
-                      {lang === "zh" 
-                        ? "汲取法水，莊嚴幻化中..." 
-                        : lang === "fil" 
-                          ? "Koneksyon sa karunungan, nagpapakita..." 
-                          : "Aligning with Dharma, manifesting..."
-                      }
-                    </p>
-                  </motion.div>
-
-                  {/* 3. 紙捲軸本體 */}
-                  <motion.div
-                    initial={{ y: 50, rotate: 0, scale: 0.8, opacity: 0 }}
-                    animate={{
-                      y: -180,
-                      rotate: 540,
-                      scale: 2.4,
-                      opacity: 1,
-                    }}
-                    exit={{ scale: 3.5, opacity: 0 }}
-                    transition={{ duration: 0.85, ease: "easeInOut" }}
-                    className={`absolute left-1/2 -translate-x-1/2 w-10 h-4 rounded-full border border-black/20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] z-40 ${
-                      luckyScrollColor === 'pink'
-                        ? "bg-gradient-to-r from-[#FFD2CC] via-[#FFA899] to-[#FFC4BA]"
-                        : "bg-gradient-to-r from-[#FFFDFD] via-[#F4E3E0] to-[#FFFDFD]"
-                    }`}
-                  >
-                    <div className="absolute inset-y-0 left-0.5 w-[3px] bg-black/15 rounded-full"></div>
-                    <div className="absolute inset-y-0 right-0.5 w-[3px] bg-black/15 rounded-full"></div>
-                    <div className={`absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 ${
-                      luckyScrollColor === 'pink' ? "bg-white/60" : "bg-red-400"
-                    }`}></div>
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* 案幾底部木座 (Altar rosewood bottom shelf decorator) */}
-          <div className="w-80 h-3 altar-table rounded-full opacity-65 mb-6 shadow-md border-t border-white/5 pointer-events-none"></div>
-
-          {/* 東方禪意標題與文字 (Serene Calligraphy Style Titles - High Contrast & Perfectly Fitted) */}
-          <div className="text-center mt-3 z-10 w-full px-3 max-w-xl mx-auto">
+          {/* 東方禪意標題與文字 (Serene Calligraphy Style Titles - High Contrast & Senior Friendly) */}
+          <div className="text-center mt-5 z-10 w-full px-3 max-w-xl mx-auto">
             <div 
               className="bg-[#2B1D1D]/90 rounded-2xl shadow-2xl w-full box-border overflow-visible transition-all"
               style={{
@@ -1081,9 +850,6 @@ export default function App() {
                 minHeight: 'auto'
               }}
             >
-              <p className="text-[11px] sm:text-xs md:text-sm tracking-[0.25em] sm:tracking-[0.35em] uppercase mb-1.5 font-bold font-sans text-[#E2C792]">
-                {lang === "zh" ? "HUMANISTIC DHARMA" : lang === "fil" ? "MGA SALITA NG DHARMA" : "DHARMA WORDS"}
-              </p>
               <h1 
                 className="font-extrabold text-[#F5E6C8] font-serif tracking-wide drop-shadow-md leading-relaxed my-1 select-none"
                 style={{
@@ -1091,8 +857,8 @@ export default function App() {
                 }}
               >
                 {lang === "zh" ? (
-                  <span style={{ whiteSpace: 'nowrap', fontSize: 'clamp(16px, 4.2vw, 26px)' }}>
-                    星雲大師 • 星雲法語
+                  <span style={{ whiteSpace: 'nowrap', fontSize: 'clamp(18px, 4.8vw, 28px)' }}>
+                    星雲法語
                   </span>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-0.5">
@@ -1136,26 +902,6 @@ export default function App() {
                   </span>
                 )}
               </h2>
-            </div>
-
-            {/* 提示訊息顯眼膠囊標籤 (Refined Zen Status Pill for Seniors) */}
-            <div className="mt-4 inline-block max-w-full px-2">
-              <p 
-                id="sub-title" 
-                className="text-sm sm:text-base md:text-lg text-[#F5E6C8] font-bold tracking-wide text-center px-5 py-2.5 sm:px-6 sm:py-2.5 rounded-full shadow-lg backdrop-blur-md leading-relaxed text-balance [word-break:keep-all] break-normal"
-                style={{
-                  background: 'rgba(0, 0, 0, 0.35)',
-                  border: '1px solid #D4AF37',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)'
-                }}
-              >
-                {isShaking 
-                  ? (lang === "zh" ? "🙏 靜心祈求中，請稍候..." : lang === "fil" ? "🙏 Inaalog ang plorera nang may paggalang, sandali lamang..." : "🙏 Praying in tranquility, please wait...")
-                  : luckyScrollFlying
-                    ? (lang === "zh" ? "✨ 佛法語已現，正在莊嚴開卷 ✨" : lang === "fil" ? "✨ Lumitaw na ang Salita ng Dharma, nagbubukas... ✨" : "✨ Dharma word revealed, unrolling... ✨")
-                    : (lang === "zh" ? "👉 點擊玻璃圓球，抽取人生法語 👈" : lang === "fil" ? "👉 I-click ang Bubog na Globo para kumuha ng Salita ng Dharma 👈" : "👉 Click the Glass Sphere to draw a Dharma Word 👈")
-                }
-              </p>
             </div>
           </div>
         </div>
