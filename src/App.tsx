@@ -1071,30 +1071,68 @@ export default function App() {
 
           {/* 東方禪意標題與文字 (Serene Calligraphy Style Titles - High Contrast & Perfectly Fitted) */}
           <div className="text-center mt-3 z-10 w-full px-3 max-w-xl mx-auto">
-            <div className="bg-[#2B1D1D]/85 border-2 border-[#E2C792]/60 backdrop-blur-md px-3 py-3.5 sm:px-5 sm:py-4.5 rounded-2xl shadow-2xl w-full box-border overflow-hidden">
-              <p className="text-[11px] sm:text-xs md:text-sm tracking-[0.25em] sm:tracking-[0.35em] uppercase mb-1 font-bold font-sans text-[#E2C792] break-words">
+            <div 
+              className="bg-[#2B1D1D]/90 rounded-2xl shadow-2xl w-full box-border overflow-visible transition-all"
+              style={{
+                padding: '18px 20px',
+                border: '1px solid rgba(226, 199, 146, 0.5)',
+                outline: '1px solid rgba(212, 163, 115, 0.3)',
+                outlineOffset: '-5px',
+                minHeight: 'auto'
+              }}
+            >
+              <p className="text-[11px] sm:text-xs md:text-sm tracking-[0.25em] sm:tracking-[0.35em] uppercase mb-1.5 font-bold font-sans text-[#E2C792]">
                 {lang === "zh" ? "HUMANISTIC DHARMA" : lang === "fil" ? "MGA SALITA NG DHARMA" : "DHARMA WORDS"}
               </p>
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#F5E6C8] font-serif tracking-wide sm:tracking-wider drop-shadow-md leading-snug">
+              <h1 
+                className="font-extrabold text-[#F5E6C8] font-serif tracking-wide drop-shadow-md leading-relaxed my-1 select-none"
+                style={{
+                  textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                }}
+              >
                 {lang === "zh" ? (
-                  "星雲大師 • 星雲法語"
-                ) : (
-                  <span className="inline-block max-w-full">
-                    <span className="whitespace-nowrap">Venerable Master Hsing Yun</span>
-                    <span className="mx-1.5 opacity-80">•</span>
-                    <span className="text-[#E2C792]">{lang === "fil" ? "Salita ng Dharma" : "Dharma Words"}</span>
+                  <span style={{ whiteSpace: 'nowrap', fontSize: 'clamp(16px, 4.2vw, 26px)' }}>
+                    星雲大師 • 星雲法語
                   </span>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-0.5">
+                    <span 
+                      className="text-[#E2C792] font-serif font-extrabold tracking-wider"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        fontSize: 'clamp(14px, 3.8vw, 22px)'
+                      }}
+                    >
+                      {lang === "fil" ? "Mga Salita ng Dharma mula kay" : "Dharma Words from"}
+                    </span>
+                    <span 
+                      className="text-[#F5E6C8] font-serif font-extrabold tracking-wide"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        fontSize: 'clamp(15px, 4.2vw, 25px)'
+                      }}
+                    >
+                      Venerable Master Hsing Yun
+                    </span>
+                  </div>
                 )}
               </h1>
-              <div className="w-16 sm:w-20 h-[2.5px] bg-[#E2C792] mx-auto my-2.5"></div>
+              <div className="w-20 sm:w-28 h-[2px] bg-[#E2C792]/80 mx-auto my-2.5"></div>
               
-              <h2 id="main-title" className="text-sm sm:text-base md:text-lg lg:text-xl font-serif text-[#E2C792] font-extrabold tracking-wide sm:tracking-widest text-center leading-normal">
+              <h2 
+                id="main-title" 
+                className="font-serif text-[#E2C792] font-extrabold tracking-wide text-center leading-relaxed select-none"
+                style={{
+                  whiteSpace: 'nowrap',
+                  fontSize: 'clamp(13px, 3.4vw, 18px)',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.5)'
+                }}
+              >
                 {lang === "zh" ? (
                   "佛光山開山祖師星雲大師"
                 ) : (
-                  <span>
-                    <span className="whitespace-nowrap">Venerable Master Hsing Yun</span>
-                    {lang === "fil" ? ", Tagapagtatag ng Fo Guang Shan" : ", Founder of Fo Guang Shan"}
+                  <span className="whitespace-nowrap">
+                    {lang === "fil" ? "Tagapagtatag ng Fo Guang Shan" : "Founder of Fo Guang Shan"}
                   </span>
                 )}
               </h2>
@@ -1160,12 +1198,24 @@ export default function App() {
 
                 <div className="scroll-content text-[#1A1A1A] z-10 relative h-full flex flex-col justify-between py-1 px-1 md:px-2">
                   {/* 上方古典文字裝飾 (高對比深赭紅標題，保護排版不被遮擋) */}
-                  <div className="flex flex-col items-center pt-2 sm:pt-3 px-3 sm:px-6 w-full max-w-full select-none z-20 relative">
-                    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-extrabold text-[#6B1E10] font-serif tracking-wide text-center leading-snug px-1 w-full max-w-full drop-shadow-sm">
-                      {lang === "zh" ? "佛光山開山祖師星雲大師" : <span className="inline-block px-1">Venerable Master Hsing Yun</span>}
+                  <div className="flex flex-col items-center pt-2 sm:pt-3 px-3 sm:px-6 w-full max-w-full select-none z-20 relative overflow-visible">
+                    <h2 
+                      className="font-extrabold text-[#6B1E10] font-serif tracking-wide text-center leading-snug px-1 w-full drop-shadow-sm select-none"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        fontSize: 'clamp(15px, 3.8vw, 24px)',
+                      }}
+                    >
+                      {lang === "zh" ? "佛光山開山祖師星雲大師" : <span className="whitespace-nowrap">Venerable Master Hsing Yun</span>}
                     </h2>
-                    <div className="w-20 sm:w-24 h-[2.5px] bg-[#6B1E10] my-1.5 sm:my-2 opacity-80"></div>
-                    <div className="text-xs sm:text-sm md:text-base text-[#6B1E10] font-serif tracking-widest uppercase font-extrabold text-center px-1">
+                    <div className="w-20 sm:w-24 h-[2px] bg-[#6B1E10]/70 my-1.5 opacity-80"></div>
+                    <div 
+                      className="text-[#6B1E10] font-serif tracking-widest uppercase font-extrabold text-center px-1 select-none"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        fontSize: 'clamp(13px, 3.2vw, 18px)',
+                      }}
+                    >
                       {lang === "zh" ? "• 星雲法語 •" : lang === "fil" ? "• Salita ng Dharma •" : "• Dharma Words •"}
                     </div>
                   </div>

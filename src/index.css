@@ -132,16 +132,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: min(720px, 90vh);
+  height: min(780px, 92vh);
   width: 50px; /* 初始寬度僅兩根軸的寬度 */
   transition: width 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: visible;
-  max-width: 92vw;
+  max-width: 95vw;
 }
 
-/* 當啟動打開特效時，容器撐開 */
+/* 當啟動打開特效時，容器撐開 (更寬大適口的古典畫框) */
 .scroll-container.unrolled {
-  width: min(520px, 92vw); /* 拉開後的寬度 */
+  width: min(640px, 95vw); /* 拉開後的寬度 */
 }
 
 /* 左右兩根古典木軸心 */
@@ -184,7 +184,7 @@
   position: absolute;
   left: 8px;
   right: 8px;
-  height: min(680px, 86vh);
+  height: min(740px, 88vh);
   background: #fdf8eb;
   background-image: 
     radial-gradient(rgba(139, 90, 43, 0.08) 1.5px, transparent 1.5px),

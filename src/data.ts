@@ -535,16 +535,16 @@ export const SINGLE_FILE_HTML_TEMPLATE = `<!doctype html>
 
       <!-- 東方禪意標題 (High Contrast & Large Fonts for Seniors) -->
       <div class="text-center mt-3 z-10 w-full px-2">
-        <div class="bg-[#2B1D1D]/80 border-2 border-[#E2C792]/50 backdrop-blur-md px-5 py-4.5 rounded-2xl shadow-2xl max-w-lg mx-auto">
+        <div class="bg-[#2B1D1D]/90 rounded-2xl shadow-2xl max-w-lg mx-auto overflow-visible" style="padding: 18px 20px; border: 1px solid rgba(226, 199, 146, 0.5); outline: 1px solid rgba(212, 163, 115, 0.3); outline-offset: -5px; min-height: auto;">
           <p class="text-xs md:text-sm tracking-[0.35em] uppercase mb-1.5 font-bold font-sans text-[#E2C792]">
             HUMANISTIC DHARMA
           </p>
-          <h1 class="text-2xl md:text-4xl lg:text-5xl font-extrabold text-[#F5E6C8] font-serif tracking-wider drop-shadow-md">
+          <h1 class="font-extrabold text-[#F5E6C8] font-serif tracking-wider drop-shadow-md select-none" style="white-space: nowrap; font-size: clamp(16px, 4.5vw, 28px); text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
             星雲大師 • 星雲法語
           </h1>
-          <div class="w-20 h-[2.5px] bg-[#E2C792] mx-auto my-2.5"></div>
+          <div class="w-20 sm:w-28 h-[2px] bg-[#E2C792]/80 mx-auto my-2.5"></div>
           
-          <h2 id="mainTitle" class="text-base md:text-xl lg:text-2xl font-serif text-[#E2C792] font-extrabold tracking-widest text-center">
+          <h2 id="mainTitle" class="font-serif text-[#E2C792] font-extrabold tracking-widest text-center select-none" style="white-space: nowrap; font-size: clamp(14px, 3.8vw, 22px); text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
             佛光山開山祖師星雲大師
           </h2>
         </div>
