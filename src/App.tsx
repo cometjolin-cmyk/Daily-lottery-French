@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 import { Chit } from "./types";
 import { DEFAULT_CHITS } from "./data";
 import { ParticleNebulaCanvas } from "./components/ParticleNebulaCanvas";
@@ -829,7 +830,7 @@ export default function App() {
         {/* 核心內容區：3D Particle Nebula Canvas Stage */}
         <div id="core-content" className="flex flex-col items-center justify-center my-auto py-2 w-full relative">
           
-          {/* 3D 粒子星雲動態引擎 */}
+          {/* 3D 粒子��雲動態引擎 */}
           <ParticleNebulaCanvas
             isMuted={isMuted}
             onStartExtraction={handleNebulaDraw}
@@ -1177,9 +1178,8 @@ export default function App() {
         )}
       </AnimatePresence>
 
-
-
-
+      {/* Vercel Web Analytics */}
+      <Analytics />
 
     </div>
   );
