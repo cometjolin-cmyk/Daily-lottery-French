@@ -312,6 +312,7 @@
       <div class="scroll-interp-text" id="modalInterpText">當我們心懷慈悲與正直，便能與萬物的自然法則和諧共鳴。</div>
       <div class="scroll-attribution" id="modalAttribution">— 佛光山開山祖師 星雲大師</div>
       <button class="btn-close" id="btnClose" onclick="closeModal()">收下法語</button>
+      <div id="modalTagline" style="font-size: 14px; font-weight: 600; color: #5C3317; margin-top: 10px; letter-spacing: 0.05em;">收下此籤，遇見更好的自己</div>
     </div>
   </div>
 
@@ -584,6 +585,7 @@
       const modalInterpText = document.getElementById('modalInterpText');
       const modalAttribution = document.getElementById('modalAttribution');
       const btnClose = document.getElementById('btnClose');
+      const modalTagline = document.getElementById('modalTagline');
 
       if (currentLang === 'zh') {
         modalAuthor.innerText = "佛光山開山祖師星雲大師";
@@ -593,6 +595,7 @@
         modalInterpText.innerText = currentChit.interpretation;
         modalAttribution.innerText = "— 佛光山開山祖師 星雲大師";
         btnClose.innerText = "收下法語";
+        if (modalTagline) modalTagline.innerText = "收下此籤，遇見更好的自己";
       } else if (currentLang === 'fil') {
         modalAuthor.innerText = "Venerable Master Hsing Yun";
         modalSubtitle.innerText = "• Salita ng Dharma •";
@@ -601,6 +604,7 @@
         modalInterpText.innerText = currentChit.filipinoInterpretation || currentChit.englishInterpretation;
         modalAttribution.innerText = "— Venerable Master Hsing Yun, Tagapagtatag ng Fo Guang Shan";
         btnClose.innerText = "Tanggapin ang Biyaya";
+        if (modalTagline) modalTagline.innerText = "Tanggapin ang biyayang ito upang makahanap ng mas magandang landas";
       } else {
         modalAuthor.innerText = "Venerable Master Hsing Yun";
         modalSubtitle.innerText = "• Dharma Words •";
@@ -609,6 +613,7 @@
         modalInterpText.innerText = currentChit.englishInterpretation || currentChit.interpretation;
         modalAttribution.innerText = "— Venerable Master Hsing Yun, Founder of Fo Guang Shan";
         btnClose.innerText = "Accept Blessing";
+        if (modalTagline) modalTagline.innerText = "Receive this blessing to find a better path";
       }
     }
 

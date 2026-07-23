@@ -1117,7 +1117,7 @@ export default function App() {
                       </button>
                     </div>
                     <p className="text-xs sm:text-sm text-[#5C3317] font-semibold tracking-widest mt-1">
-                      {lang === "zh" ? "收下此卜，遇見更好的自己" : lang === "fil" ? "Tanggapin ang biyayang ito upang makahanap ng mas magandang landas" : "Receive this blessing to find a better path"}
+                      {lang === "zh" ? "收下此籤，遇見更好的自己" : lang === "fil" ? "Tanggapin ang biyayang ito upang makahanap ng mas magandang landas" : "Receive this blessing to find a better path"}
                     </p>
                   </div>
                 </div>
