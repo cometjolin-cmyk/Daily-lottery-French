@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 import { Chit } from "./types";
 import { DEFAULT_CHITS } from "./data";
 import { ParticleNebulaCanvas } from "./components/ParticleNebulaCanvas";
@@ -1209,10 +1210,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-
-
-
-
+      <Analytics />
     </div>
   );
 }
