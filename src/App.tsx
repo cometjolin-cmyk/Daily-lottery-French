@@ -801,25 +801,57 @@ export default function App() {
         </svg>
       </div>
 
-      {/* 右上角低調按鈕組 (Utility Controls - High Contrast for Seniors) */}
-      <div className="absolute top-4 right-4 flex items-center space-x-2.5 z-30">
-        <button
-          id="lang-btn"
-          onClick={() => setLang(lang === "zh" ? "en" : lang === "en" ? "fil" : "zh")}
-          className="px-4 h-9 rounded-full bg-[#2B1D1D]/90 backdrop-blur-md border-2 border-[#E2C792]/70 flex items-center justify-center text-xs font-bold tracking-widest text-[#F5E6C8] hover:text-white hover:bg-[#3E2723] hover:border-[#E2C792] transition-all duration-300 cursor-pointer shadow-lg"
-          title={lang === "zh" ? "Switch to English" : lang === "en" ? "Lumipat sa Filipino" : "切換至繁體中文"}
-        >
-          <i className="fa-solid fa-language text-sm mr-1.5 text-[#E2C792]"></i>
-          <span>{lang === "zh" ? "EN" : lang === "en" ? "FIL" : "中文"}</span>
-        </button>
+      {/* 獨立三語切換按鈕組 (Elderly-Friendly Accessibility Language Switcher) */}
+      <div className="w-full max-w-md mx-auto flex items-center justify-between px-3 pt-3 pb-1 z-30 relative">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setLang("zh")}
+            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border-2 transition-all duration-300 cursor-pointer text-[18px] sm:text-[20px] font-extrabold ${
+              lang === "zh"
+                ? "bg-[#E2C792] text-[#2B1D1D] border-[#E2C792] shadow-[0_0_16px_rgba(226,199,146,0.6)] scale-105"
+                : "bg-[#2B1D1D]/60 text-[#E2C792] border-[#E2C792] hover:bg-[#3E2723]/80 hover:text-white"
+            }`}
+            title="切換至繁體中文"
+          >
+            繁中
+          </button>
 
+          <button
+            type="button"
+            onClick={() => setLang("en")}
+            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border-2 transition-all duration-300 cursor-pointer text-[18px] sm:text-[20px] font-extrabold ${
+              lang === "en"
+                ? "bg-[#E2C792] text-[#2B1D1D] border-[#E2C792] shadow-[0_0_16px_rgba(226,199,146,0.6)] scale-105"
+                : "bg-[#2B1D1D]/60 text-[#E2C792] border-[#E2C792] hover:bg-[#3E2723]/80 hover:text-white"
+            }`}
+            title="Switch to English"
+          >
+            En
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLang("fil")}
+            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border-2 transition-all duration-300 cursor-pointer text-[18px] sm:text-[20px] font-extrabold ${
+              lang === "fil"
+                ? "bg-[#E2C792] text-[#2B1D1D] border-[#E2C792] shadow-[0_0_16px_rgba(226,199,146,0.6)] scale-105"
+                : "bg-[#2B1D1D]/60 text-[#E2C792] border-[#E2C792] hover:bg-[#3E2723]/80 hover:text-white"
+            }`}
+            title="Lumipat sa Filipino"
+          >
+            Ph
+          </button>
+        </div>
+
+        {/* 靜音控制按鈕 */}
         <button
           id="mute-btn"
           onClick={() => setIsMuted(!isMuted)}
-          className="w-9 h-9 rounded-full bg-[#2B1D1D]/90 backdrop-blur-md border-2 border-[#E2C792]/70 flex items-center justify-center text-[#F5E6C8] hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg"
+          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#2B1D1D]/80 border-2 border-[#E2C792] flex items-center justify-center text-[#E2C792] hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg"
           title={isMuted ? "開啟音效" : "靜音模式"}
         >
-          <i className={`fa-solid ${isMuted ? "fa-volume-xmark" : "fa-volume-high"} text-sm`}></i>
+          <i className={`fa-solid ${isMuted ? "fa-volume-xmark" : "fa-volume-high"} text-base sm:text-lg`}></i>
         </button>
       </div>
 
@@ -1080,7 +1112,7 @@ export default function App() {
                       >
                         <i className="fa-solid fa-circle-check text-base sm:text-lg text-amber-200"></i>
                         <span>
-                          {lang === "zh" ? "收下此卜" : lang === "fil" ? "Tanggapin ang Biyaya" : "Receive Blessing"}
+                          {lang === "zh" ? "收下法語" : lang === "fil" ? "Tanggapin ang Biyaya" : "Accept Blessing"}
                         </span>
                       </button>
                     </div>

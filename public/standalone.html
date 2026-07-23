@@ -23,16 +23,78 @@
       align-items: center;
       justify-content: center;
       overflow-x: hidden;
+      padding: 12px;
     }
     .container {
       width: 100%;
       max-width: 480px;
-      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
     }
+
+    /* 獨立三語按鈕區與靜音控制 (Elderly-Friendly Accessibility Bar) */
+    .top-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      z-index: 30;
+    }
+    .lang-btn-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .lang-btn {
+      font-size: 19px;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 2px solid #E2C792;
+      background: rgba(43, 29, 29, 0.6);
+      color: #E2C792;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      outline: none;
+      user-select: none;
+    }
+    .lang-btn:hover {
+      background: rgba(62, 39, 35, 0.85);
+      color: #FFFFFF;
+    }
+    .lang-btn.active {
+      background: #E2C792;
+      color: #2B1D1D;
+      font-weight: 900;
+      border-color: #E2C792;
+      box-shadow: 0 0 16px rgba(226, 199, 146, 0.7), 0 4px 12px rgba(0, 0, 0, 0.4);
+      transform: scale(1.05);
+    }
+    .mute-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 2px solid #E2C792;
+      background: rgba(43, 29, 29, 0.8);
+      color: #E2C792;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      user-select: none;
+    }
+    .mute-btn:hover {
+      background: #3E2723;
+      color: #FFF;
+    }
+
     .header-box {
       background: rgba(43, 29, 29, 0.85);
       border: 1px solid rgba(226, 199, 146, 0.5);
@@ -42,16 +104,8 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       width: 100%;
     }
-    .subtitle {
-      font-size: 11px;
-      color: #E2C792;
-      letter-spacing: 0.25em;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
     .main-title {
-      font-size: clamp(20px, 5vw, 28px);
+      font-size: clamp(18px, 4.8vw, 28px);
       font-weight: 900;
       color: #F5E6C8;
       white-space: nowrap;
@@ -65,15 +119,17 @@
       margin: 8px auto;
     }
     .author-title {
-      font-size: clamp(13px, 3.5vw, 17px);
+      font-size: clamp(13px, 3.5vw, 18px);
       color: #E2C792;
       font-weight: 700;
       white-space: nowrap;
     }
+
+    /* 引導膠囊標籤 (High Contrast Guard) */
     .hint-badge {
-      margin-top: 15px;
-      background: rgba(43, 29, 29, 0.75);
-      border: 1px solid #D4AF37;
+      margin-top: 12px;
+      background: rgba(43, 29, 29, 0.7);
+      border: 1px solid #E2C792;
       padding: 10px 22px;
       border-radius: 9999px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.4);
@@ -82,6 +138,7 @@
       align-items: center;
       gap: 8px;
       transition: transform 0.2s ease;
+      user-select: none;
     }
     .hint-badge:hover {
       transform: scale(1.03);
@@ -90,17 +147,19 @@
       transform: scale(0.97);
     }
     .hint-text {
-      font-size: clamp(14px, 4vw, 18px);
+      font-size: clamp(16px, 4.2vw, 20px);
       font-weight: 800;
       color: #F5E6C8;
     }
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       background-color: #FFD700;
       border-radius: 50%;
-      box-shadow: 0 0 8px #FFD700;
+      box-shadow: 0 0 10px #FFD700;
+      flex-shrink: 0;
     }
+
     #canvas-container {
       position: relative;
       width: 320px;
@@ -112,7 +171,8 @@
       width: 100%;
       height: 100%;
     }
-    /* Scroll Popover Modal */
+
+    /* Classical Scroll Popover Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -122,7 +182,7 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      padding: 20px;
+      padding: 16px;
     }
     .modal-overlay.active {
       display: flex;
@@ -130,54 +190,101 @@
     .scroll-card {
       background: #FDF8EB;
       color: #2B1D1D;
-      border-radius: 12px;
-      max-width: 440px;
+      border-radius: 16px;
+      max-width: 450px;
       width: 100%;
-      padding: 24px;
+      padding: 24px 20px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-      border: 2px solid #E2C792;
+      border: 4px solid #C5A059;
       text-align: center;
       position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
     }
-    .scroll-title {
-      font-size: 22px;
+    .scroll-author {
+      font-size: clamp(16px, 4vw, 22px);
       font-weight: 900;
-      color: #8B1E1E;
-      margin-bottom: 12px;
+      color: #6B1E1E;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+    .scroll-subtitle {
+      font-size: 15px;
+      font-weight: 800;
+      color: #8C241C;
+      letter-spacing: 0.15em;
+      margin-bottom: 10px;
     }
     .scroll-image {
       width: 100%;
-      max-height: 280px;
-      object-fit: cover;
+      max-height: 250px;
+      object-fit: contain;
       border-radius: 8px;
-      margin: 12px 0;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin: 10px 0;
+      background: #FCF9F2;
+      border: 1px solid #BD9A7A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
     .scroll-content {
-      font-size: 18px;
+      font-size: clamp(18px, 4.5vw, 24px);
       line-height: 1.8;
-      font-weight: 700;
-      color: #2B1D1D;
-      margin: 16px 0;
+      font-weight: 800;
+      color: #1A1A1A;
+      margin: 14px 0;
+      word-break: keep-all;
+    }
+    .scroll-interp-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #8C241C;
+      letter-spacing: 0.1em;
+      margin-top: 10px;
+    }
+    .scroll-interp-text {
+      font-size: clamp(15px, 3.8vw, 18px);
+      line-height: 1.7;
+      font-weight: 600;
+      color: #3E2723;
+      margin-top: 6px;
+    }
+    .scroll-attribution {
+      font-size: 15px;
+      font-weight: 800;
+      color: #795548;
+      margin-top: 16px;
+      white-space: nowrap;
     }
     .btn-close {
       background: linear-gradient(135deg, #8B1E1E, #5C1212);
       color: #F5E6C8;
       border: none;
-      padding: 12px 28px;
+      padding: 12px 32px;
       border-radius: 9999px;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 800;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 18px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+    }
+    .btn-close:hover {
+      transform: scale(1.04);
     }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <!-- 三語切換按鈕組 & 靜音 -->
+    <div class="top-bar">
+      <div class="lang-btn-group">
+        <button type="button" class="lang-btn active" id="btnZh" onclick="setLanguage('zh')">繁中</button>
+        <button type="button" class="lang-btn" id="btnEn" onclick="setLanguage('en')">En</button>
+        <button type="button" class="lang-btn" id="btnPh" onclick="setLanguage('fil')">Ph</button>
+      </div>
+      <button type="button" class="mute-btn" id="muteBtn" onclick="toggleMute()" title="靜音/開聲">🔊</button>
+    </div>
+
     <div id="canvas-container">
       <canvas id="nebulaCanvas" width="360" height="360"></canvas>
     </div>
@@ -188,38 +295,128 @@
     </div>
 
     <div class="header-box">
-      <div class="main-title">Dharma Words from Venerable Master Hsing Yun</div>
+      <div class="main-title" id="mainTitle">星雲法語</div>
       <div class="divider"></div>
-      <div class="author-title">佛光山開山祖師星雲大師 • 星雲法語</div>
+      <div class="author-title" id="authorTitle">佛光山開山祖師星雲大師</div>
     </div>
   </div>
 
   <!-- Modal Popover -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="scroll-card">
-      <div class="scroll-title" id="chitTitle">星雲法語</div>
+      <div class="scroll-author" id="modalAuthor">佛光山開山祖師星雲大師</div>
+      <div class="scroll-subtitle" id="modalSubtitle">• 星雲法語 •</div>
       <img id="chitImage" class="scroll-image" src="" alt="法語圖" />
-      <div class="scroll-content" id="chitContent">慈悲偉大的佛陀，請給予我無上的智慧與光明...</div>
-      <button class="btn-close" id="btnClose">收下此卜</button>
+      <div class="scroll-content" id="chitContent">慈悲是宇宙間最偉大的力量，能化解一切干戈與執著。</div>
+      <div class="scroll-interp-title" id="modalInterpTitle">【 今日開示 】</div>
+      <div class="scroll-interp-text" id="modalInterpText">當我們心懷慈悲與正直，便能與萬物的自然法則和諧共鳴。</div>
+      <div class="scroll-attribution" id="modalAttribution">— 佛光山開山祖師 星雲大師</div>
+      <button class="btn-close" id="btnClose" onclick="closeModal()">收下法語</button>
     </div>
   </div>
 
   <script>
-    // Sample Chits Data
+    // Multi-language Sample Chits Data
     const chits = [
-      { id: 1, title: "慈悲包容", content: "慈悲是宇宙間最偉大的力量，能化解一切干戈與執著。", image: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=80" },
-      { id: 2, title: "心如大海", content: "心量有多大，事業就有多大；包容有多廣，成就就有多高。", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
-      { id: 3, title: "行善積德", content: "身做好事，口說好話，心存好意，即是世間最圓滿的修行。", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" }
+      {
+        id: 1,
+        image: "https://lh3.googleusercontent.com/d/13IvO7jyHqSk6MeNz0EVcKVnRS8rGV9lE",
+        chinese: "有道之人的心中，常有天理。",
+        english: "In the heart of one who follows the Path, there is always heavenly reason.",
+        filipino: "Sa puso ng may sapat na kaalaman sa Landas, laging may banal na katwiran.",
+        interpretation: "今日指引：當我們心懷慈悲與正直，便能與萬物的自然法則和諧共鳴。心中常存天理，便無懼世間風雨。",
+        englishInterpretation: "Daily Guidance: When we hold compassion and integrity in our hearts, we harmonize with the natural laws of all things. With heavenly reason in your heart, you will fear no worldly storms.",
+        filipinoInterpretation: "Gabay sa Araw-araw: Kapag taglay natin ang pagmamalasakit at katapatan sa ating puso, nakikiayon tayo sa likas na batas ng lahat ng bagay."
+      },
+      {
+        id: 2,
+        image: "https://lh3.googleusercontent.com/d/1z5EAYxCludS7r-EKHTsueGpH7GBmpakK",
+        chinese: "佛陀大雄大力大無畏",
+        english: "The Buddha possesses great heroism, great power, and great fearlessness.",
+        filipino: "Ang Buddha ay may dakilang kabayanihan, dakilang kapangyarihan, at dakilang kawalan ng takot.",
+        interpretation: "今日指引：我們的心中皆具有佛性，面對生活中的風雨與挑戰，請汲取這份「大雄大力大無畏」的勇氣。",
+        englishInterpretation: "Daily Guidance: Buddha-nature resides within all of us. Draw upon this courage of 'great heroism, great power, and great fearlessness.'",
+        filipinoInterpretation: "Gabay sa Araw-araw: Ang kalikasang-Buddha ay nananahan sa loob nating lahat. Humugot ng lakas mula sa tapang ng dakilang kagitingan."
+      },
+      {
+        id: 3,
+        image: "https://lh3.googleusercontent.com/d/1hmqfPlNlIc9d09RTxaBN6H03x_y4MP85",
+        chinese: "菩薩大慈大悲大救濟",
+        english: "The Bodhisattva has great love, great compassion, and great salvation.",
+        filipino: "Ang Bodhisattva ay may dakilang pagmamahal, dakilang habag, at dakilang pagliligtas.",
+        interpretation: "今日指引：以菩薩般的慈悲心對待身邊的每一個人。當我們伸手扶助他人時，生命便隨之圓滿。",
+        englishInterpretation: "Daily Guidance: Treat everyone around you with Bodhisattva-like compassion. Spread warmth and nourish the lotus in your heart.",
+        filipinoInterpretation: "Gabay sa Araw-araw: Tratuhin ang bawat tao sa iyong paligid nang may pagmamalasakit na tulad ng sa isang Bodhisattva."
+      }
     ];
 
+    let currentLang = 'zh'; // zh | en | fil
+    let isMuted = false;
     let animState = 'idle'; // idle | condensing | ascending
     let condenseProgress = 0;
     let ascendProgress = 0;
     let rotX = 0, rotY = 0;
     let time = 0;
+    let currentChit = chits[0];
+
+    // Language switching function
+    function setLanguage(lang) {
+      currentLang = lang;
+      
+      // Update buttons
+      document.getElementById('btnZh').classList.toggle('active', lang === 'zh');
+      document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+      document.getElementById('btnPh').classList.toggle('active', lang === 'fil');
+
+      // Update Hint text according to current animation state
+      updateHintText();
+
+      // Update Header Titles
+      const mainTitle = document.getElementById('mainTitle');
+      const authorTitle = document.getElementById('authorTitle');
+
+      if (lang === 'zh') {
+        mainTitle.innerText = "星雲法語";
+        authorTitle.innerText = "佛光山開山祖師星雲大師";
+      } else if (lang === 'en') {
+        mainTitle.innerText = "Dharma Words from Venerable Master Hsing Yun";
+        authorTitle.innerText = "Founder of Fo Guang Shan";
+      } else {
+        mainTitle.innerText = "Mga Salita ng Dharma mula kay Venerable Master Hsing Yun";
+        authorTitle.innerText = "Tagapagtatag ng Fo Guang Shan";
+      }
+
+      // Update Modal Card content if visible
+      if (document.getElementById('modalOverlay').classList.contains('active')) {
+        renderModalContent();
+      }
+    }
+
+    function updateHintText() {
+      const hint = document.getElementById('hintText');
+      if (animState === 'idle') {
+        if (currentLang === 'zh') hint.innerText = "👉 輕點點點星光，抽取今日星雲法語";
+        else if (currentLang === 'fil') hint.innerText = "👉 I-tap ang mga liwanag para kumuha ng gabay sa araw na ito";
+        else hint.innerText = "👉 Tap the glowing lights to receive today's Dharma word";
+      } else if (animState === 'condensing') {
+        if (currentLang === 'zh') hint.innerText = "✨ 誠心祈福中，為您凝聚智慧...";
+        else if (currentLang === 'fil') hint.innerText = "✨ Nag-iipon ng magagandang kaisipan at karunungan...";
+        else hint.innerText = "✨ Gathering good thoughts and wisdom...";
+      } else if (animState === 'ascending') {
+        if (currentLang === 'zh') hint.innerText = "🌸 靈感降臨，正在為您打開法語...";
+        else if (currentLang === 'fil') hint.innerText = "🌸 Nagbubukas na ang iyong espesyal na gabay...";
+        else hint.innerText = "🌸 Your wisdom message is opening...";
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').innerText = isMuted ? "🔇" : "🔊";
+    }
 
     // Web Audio API Singing Bowl
     function playSingingBowl() {
+      if (isMuted) return;
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
@@ -249,7 +446,7 @@
       }
     }
 
-    // Canvas Setup
+    // Canvas 3D Particle Nebula Engine
     const canvas = document.getElementById('nebulaCanvas');
     const ctx = canvas.getContext('2d');
     const particles = [];
@@ -312,7 +509,7 @@
         ctx.fill();
       });
 
-      // Super-Radiant White-Gold Energy Core
+      // Super-Radiant Platinum-Gold Energy Core
       if (animState === 'condensing' && condenseProgress > 0.4) {
         const coreAlpha = Math.min(1, (condenseProgress - 0.4) / 0.5);
         ctx.save();
@@ -371,29 +568,65 @@
       animState = 'condensing';
       condenseProgress = 0;
       ascendProgress = 0;
-      document.getElementById('hintText').innerText = '✨ 誠心祈福中，為您凝聚智慧...';
+      updateHintText();
 
       setTimeout(() => {
         animState = 'ascending';
-        document.getElementById('hintText').innerText = '🌸 靈感降臨，正在為您打開法語...';
+        updateHintText();
       }, 1000);
+    }
+
+    function renderModalContent() {
+      const modalAuthor = document.getElementById('modalAuthor');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const chitContent = document.getElementById('chitContent');
+      const modalInterpTitle = document.getElementById('modalInterpTitle');
+      const modalInterpText = document.getElementById('modalInterpText');
+      const modalAttribution = document.getElementById('modalAttribution');
+      const btnClose = document.getElementById('btnClose');
+
+      if (currentLang === 'zh') {
+        modalAuthor.innerText = "佛光山開山祖師星雲大師";
+        modalSubtitle.innerText = "• 星雲法語 •";
+        chitContent.innerText = currentChit.chinese;
+        modalInterpTitle.innerText = "【 今日開示 】";
+        modalInterpText.innerText = currentChit.interpretation;
+        modalAttribution.innerText = "— 佛光山開山祖師 星雲大師";
+        btnClose.innerText = "收下法語";
+      } else if (currentLang === 'fil') {
+        modalAuthor.innerText = "Venerable Master Hsing Yun";
+        modalSubtitle.innerText = "• Salita ng Dharma •";
+        chitContent.innerText = `"${currentChit.filipino}"`;
+        modalInterpTitle.innerText = "【 Gabay sa Araw-Araw 】";
+        modalInterpText.innerText = currentChit.filipinoInterpretation || currentChit.englishInterpretation;
+        modalAttribution.innerText = "— Venerable Master Hsing Yun, Tagapagtatag ng Fo Guang Shan";
+        btnClose.innerText = "Tanggapin ang Biyaya";
+      } else {
+        modalAuthor.innerText = "Venerable Master Hsing Yun";
+        modalSubtitle.innerText = "• Dharma Words •";
+        chitContent.innerText = `"${currentChit.english}"`;
+        modalInterpTitle.innerText = "【 Daily Guidance 】";
+        modalInterpText.innerText = currentChit.englishInterpretation || currentChit.interpretation;
+        modalAttribution.innerText = "— Venerable Master Hsing Yun, Founder of Fo Guang Shan";
+        btnClose.innerText = "Accept Blessing";
+      }
     }
 
     function revealChit() {
       animState = 'idle';
-      const randomChit = chits[Math.floor(Math.random() * chits.length)];
-      document.getElementById('chitTitle').innerText = randomChit.title;
-      document.getElementById('chitContent').innerText = randomChit.content;
-      document.getElementById('chitImage').src = randomChit.image;
+      currentChit = chits[Math.floor(Math.random() * chits.length)];
+      document.getElementById('chitImage').src = currentChit.image;
+      renderModalContent();
       document.getElementById('modalOverlay').classList.add('active');
-      document.getElementById('hintText').innerText = '👉 輕點點點星光，抽取今日星雲法語';
+      updateHintText();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
     }
 
     document.getElementById('canvas-container').addEventListener('click', triggerDraw);
     document.getElementById('hintBadge').addEventListener('click', triggerDraw);
-    document.getElementById('btnClose').addEventListener('click', () => {
-      document.getElementById('modalOverlay').classList.remove('active');
-    });
   </script>
 </body>
 </html>
