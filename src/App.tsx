@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
-import { Chit } from "./types";
+import { Chit, ExtendedChit, SheetDataStatus } from "./types";
 import { DEFAULT_CHITS } from "./data";
 import { ParticleNebulaCanvas } from "./components/ParticleNebulaCanvas";
+import { AdminDrawer } from "./components/AdminDrawer";
+import { fetchChitsFromSheet, DEFAULT_SPREADSHEET_ID } from "./services/sheets";
 
 interface ScrollData {
   id: number;
@@ -38,7 +40,72 @@ const BuddhaIcon = () => (
 );
 
 export default function App() {
-  const [chits] = useState<Chit[]>(DEFAULT_CHITS);
+  const [chits, setChits] = useState<Chit[]>(DEFAULT_CHITS);
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has("admin") || searchParams.has("debug")) {
+        localStorage.setItem("xingyun_admin_mode", "true");
+        return true;
+      }
+      return localStorage.getItem("xingyun_admin_mode") === "true";
+    }
+    return false;
+  });
+
+  const [titleClickCount, setTitleClickCount] = useState<number>(0);
+  const handleTitleClick = () => {
+    const nextCount = titleClickCount + 1;
+    setTitleClickCount(nextCount);
+    if (nextCount >= 5) {
+      setIsAdminMode(true);
+      localStorage.setItem("xingyun_admin_mode", "true");
+      setIsAdminDrawerOpen(true);
+      setToastMessage("已開啟管理員診斷模式！⚙️");
+      setTitleClickCount(0);
+    }
+  };
+
+  const [spreadsheetId, setSpreadsheetId] = useState<string>(DEFAULT_SPREADSHEET_ID);
+  const [isAdminDrawerOpen, setIsAdminDrawerOpen] = useState<boolean>(false);
+  const [isFetchingSheet, setIsFetchingSheet] = useState<boolean>(false);
+  const [sheetStatus, setSheetStatus] = useState<SheetDataStatus>({
+    source: "loading",
+    spreadsheetId: DEFAULT_SPREADSHEET_ID,
+    lastUpdated: null,
+    totalCount: DEFAULT_CHITS.length,
+    publishedCount: DEFAULT_CHITS.length,
+    draftCount: 0,
+    warningCount: 0,
+    errorDetails: null,
+    chits: DEFAULT_CHITS as ExtendedChit[],
+  });
+
+  const loadSheetData = useCallback(async (targetId: string, showToast: boolean = true) => {
+    setIsFetchingSheet(true);
+    const result = await fetchChitsFromSheet(targetId);
+    setSheetStatus(result);
+    setIsFetchingSheet(false);
+
+    if (result.source === "sheet" && result.chits.length > 0) {
+      const activeChits = result.chits.filter((item) => item.status !== "draft");
+      const loaded = activeChits.length > 0 ? activeChits : result.chits;
+      setChits(loaded);
+      if (showToast) {
+        setToastMessage(`已成功讀取 Google Sheet (${loaded.length} 筆法語)`);
+      }
+    } else {
+      setChits(DEFAULT_CHITS);
+      if (showToast && result.errorDetails) {
+        setToastMessage(`串接警告：${result.errorDetails}，已切換至內建預設法語庫。`);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSheetData(spreadsheetId, false);
+  }, [spreadsheetId, loadSheetData]);
+
   const [lang, setLang] = useState<"zh" | "en" | "fil">("zh");
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
@@ -845,15 +912,32 @@ export default function App() {
           </button>
         </div>
 
-        {/* 靜音控制按鈕 */}
-        <button
-          id="mute-btn"
-          onClick={() => setIsMuted(!isMuted)}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#2B1D1D]/80 border-2 border-[#E2C792] flex items-center justify-center text-[#E2C792] hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg"
-          title={isMuted ? "開啟音效" : "靜音模式"}
-        >
-          <i className={`fa-solid ${isMuted ? "fa-volume-xmark" : "fa-volume-high"} text-base sm:text-lg`}></i>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* 診斷儀表板觸發按鈕（管理員模式下才顯示） */}
+          {isAdminMode && (
+            <button
+              onClick={() => setIsAdminDrawerOpen(true)}
+              className="px-3 py-2 rounded-xl bg-[#2B1D1D]/80 border-2 border-[#E2C792] flex items-center gap-1.5 text-[#E2C792] hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg text-xs sm:text-sm font-bold"
+              title="開啟 Google Sheets 資料診斷儀表板"
+            >
+              <span>⚙️</span>
+              <span>診斷</span>
+              {sheetStatus.warningCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              )}
+            </button>
+          )}
+
+          {/* 靜音控制按鈕 */}
+          <button
+            id="mute-btn"
+            onClick={() => setIsMuted(!isMuted)}
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#2B1D1D]/80 border-2 border-[#E2C792] flex items-center justify-center text-[#E2C792] hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg"
+            title={isMuted ? "開啟音效" : "靜音模式"}
+          >
+            <i className={`fa-solid ${isMuted ? "fa-volume-xmark" : "fa-volume-high"} text-base sm:text-lg`}></i>
+          </button>
+        </div>
       </div>
 
       {/* 居中神聖案几容器 (Main Altar Stage with 3D Particle Nebula) */}
@@ -884,7 +968,9 @@ export default function App() {
               }}
             >
               <h1 
-                className="font-extrabold text-[#F5E6C8] font-serif tracking-wide drop-shadow-md leading-relaxed my-1 select-none"
+                onClick={handleTitleClick}
+                className="font-extrabold text-[#F5E6C8] font-serif tracking-wide drop-shadow-md leading-relaxed my-1 select-none cursor-pointer"
+                title="點擊 5 次解鎖管理員診斷儀表板"
                 style={{
                   textShadow: '0 2px 4px rgba(0,0,0,0.5)'
                 }}
@@ -1209,6 +1295,23 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AdminDrawer
+        isOpen={isAdminDrawerOpen}
+        onClose={() => setIsAdminDrawerOpen(false)}
+        status={sheetStatus}
+        onRefresh={() => loadSheetData(spreadsheetId, true)}
+        onUpdateSheetId={(newId) => {
+          setSpreadsheetId(newId);
+          loadSheetData(newId, true);
+        }}
+        isFetching={isFetchingSheet}
+        onExitAdminMode={() => {
+          setIsAdminMode(false);
+          localStorage.removeItem("xingyun_admin_mode");
+          setToastMessage("已隱藏診斷按鈕（退出管理員模式）");
+        }}
+      />
 
       <Analytics />
     </div>
