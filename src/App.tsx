@@ -11,6 +11,8 @@ import { DEFAULT_CHITS } from "./data";
 import { ParticleNebulaCanvas } from "./components/ParticleNebulaCanvas";
 import { AdminDrawer } from "./components/AdminDrawer";
 import { fetchChitsFromSheet, DEFAULT_SPREADSHEET_ID } from "./services/sheets";
+import { FestiveHeroModal } from "./components/FestiveHeroModal";
+import { FESTIVE_CONFIGS, getScheduledThemeId } from "./config/festiveConfig";
 
 interface ScrollData {
   id: number;
@@ -45,10 +47,9 @@ export default function App() {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.has("admin") || searchParams.has("debug")) {
-        localStorage.setItem("xingyun_admin_mode", "true");
         return true;
       }
-      return localStorage.getItem("xingyun_admin_mode") === "true";
+      localStorage.removeItem("xingyun_admin_mode");
     }
     return false;
   });
@@ -59,7 +60,6 @@ export default function App() {
     setTitleClickCount(nextCount);
     if (nextCount >= 5) {
       setIsAdminMode(true);
-      localStorage.setItem("xingyun_admin_mode", "true");
       setIsAdminDrawerOpen(true);
       setToastMessage("已開啟管理員診斷模式！⚙️");
       setTitleClickCount(0);
@@ -107,6 +107,9 @@ export default function App() {
   }, [spreadsheetId, loadSheetData]);
 
   const [lang, setLang] = useState<"zh" | "en" | "fil">("zh");
+  const [showFestiveModal, setShowFestiveModal] = useState<boolean>(false);
+  const [festiveKey, setFestiveKey] = useState<string>("auto");
+  const activeFestiveKey = festiveKey === "auto" ? getScheduledThemeId() : festiveKey;
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
   const [luckyScrollFlying, setLuckyScrollFlying] = useState<boolean>(false);
@@ -121,59 +124,56 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [nebulaAnimState, setNebulaAnimState] = useState<"idle" | "condensing" | "ascending">("idle");
 
-  // Particle Nebula Extraction Logic (3-Stage Particle Condensation & Ascension)
+  // 5 階段儀式流程抽籤邏輯 (Nebula Draw -> Festive Portal -> Scroll Unroll)
   const handleNebulaDraw = () => {
-    if (nebulaAnimState !== "idle" || showModal || isPreloading) return;
+    if (nebulaAnimState !== "idle" || showModal || isPreloading || showFestiveModal) return;
 
-    // 1. Randomly pick a chit
-    const luckyChit = chits[Math.floor(Math.random() * chits.length)];
-    setIsPreloading(true);
-    setSelectedChit(null);
+    // 1. 階段 1：星雲加速向中央凝縮 (Condensing)
+    setNebulaAnimState("condensing");
 
-    let isImgLoaded = false;
-    let isAscendFinished = false;
+    // 2. 預備抽出法語並預載圖片
+    const luckyChit = chits[Math.floor(Math.random() * chits.length)] || DEFAULT_CHITS[0];
+    setSelectedChit(luckyChit);
 
-    // 2. Preload image in background
     const img = new Image();
     img.crossOrigin = "anonymous";
+    img.src = luckyChit.image_url;
 
-    const checkAndReveal = () => {
-      if (isImgLoaded && isAscendFinished) {
-        setIsPreloading(false);
-        setSelectedChit(luckyChit);
+    // 3. 階段 2：600ms 後進入極限發光與光芒昇華 (Ascending)
+    setTimeout(() => {
+      setNebulaAnimState("ascending");
+    }, 600);
+
+    // 4. 階段 3：1100ms 凝縮光芒頂點爆發，若非原始(無節日)主題則進入全螢幕節慶 Portal，否則直接開啟解籤卷軸
+    setTimeout(() => {
+      setNebulaAnimState("idle");
+      if (activeFestiveKey === "original") {
         setShowModal(true);
         setIsScrollUnrolled(false);
         playZenReveal();
         setTimeout(() => {
           setIsScrollUnrolled(true);
-          setNebulaAnimState("idle");
         }, 120);
+      } else {
+        setShowFestiveModal(true);
       }
-    };
+    }, 1100);
+  };
 
-    img.onload = () => {
-      isImgLoaded = true;
-      checkAndReveal();
-    };
-    img.onerror = () => {
-      isImgLoaded = true;
-      checkAndReveal();
-    };
-    img.src = luckyChit.image_url;
+  // 階段 5：節慶積福滿 3 下爆發圓滿後，順暢淡出 Portal 並開啟典雅解籤卷軸
+  const handleFestiveComplete = () => {
+    setShowFestiveModal(false);
+    if (!selectedChit && chits.length > 0) {
+      const luckyChit = chits[Math.floor(Math.random() * chits.length)];
+      setSelectedChit(luckyChit);
+    }
+    setShowModal(true);
+    setIsScrollUnrolled(false);
+    playZenReveal();
 
-    // Phase 1: Condensing 0.0s ~ 1.0s
-    setNebulaAnimState("condensing");
-
-    // Phase 2: Ascending 1.0s ~ 2.0s
     setTimeout(() => {
-      setNebulaAnimState("ascending");
-    }, 1000);
-
-    // Phase 3: Flight finished
-    setTimeout(() => {
-      isAscendFinished = true;
-      checkAndReveal();
-    }, 2000);
+      setIsScrollUnrolled(true);
+    }, 120);
   };
 
   // 自動清除 Toast 消息
@@ -778,7 +778,44 @@ export default function App() {
         attrY
       );
 
-      // 7. 右下角：印章「佛光人間」(120x120 仿實體篆刻印章)
+      // 7a. 左下角：經典印章 (使用指定圖檔 1C5Xhu4Wq6XymmaVVikFnLTopv2bGXu2x - 放大顯眼版)
+      const drawLeftSealOnCanvas = () => {
+        return new Promise<void>((resolve) => {
+          const sealImg = new Image();
+          sealImg.crossOrigin = "anonymous";
+          sealImg.onload = () => {
+            const targetWidth = 175;
+            const aspectRatio = (sealImg.height && sealImg.width) ? (sealImg.height / sealImg.width) : 1.4;
+            const targetHeight = targetWidth * aspectRatio;
+            const leftSealX = 70;
+            const leftSealY = 1835 - targetHeight; // 底部對齊左下角 (加大尺寸)
+            ctx.drawImage(sealImg, leftSealX, leftSealY, targetWidth, targetHeight);
+            resolve();
+          };
+          sealImg.onerror = () => {
+            // 降級方案：經典紅底金字矩形印章「吉祥如意」
+            const leftSealX = 80;
+            const leftSealY = 1630;
+            ctx.fillStyle = "#b71c1c";
+            ctx.fillRect(leftSealX, leftSealY, 130, 190);
+            ctx.strokeStyle = "#fff9c4";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(leftSealX + 8, leftSealY + 8, 114, 174);
+            ctx.fillStyle = "#fff9c4";
+            ctx.font = "bold 30px 'Noto Serif TC', 'PingFang TC', serif";
+            ctx.textBaseline = "middle";
+            ctx.textAlign = "center";
+            ctx.fillText("吉祥", leftSealX + 65, leftSealY + 60);
+            ctx.fillText("如意", leftSealX + 65, leftSealY + 130);
+            resolve();
+          };
+          sealImg.src = "https://lh3.googleusercontent.com/d/1C5Xhu4Wq6XymmaVVikFnLTopv2bGXu2x";
+        });
+      };
+
+      await drawLeftSealOnCanvas();
+
+      // 7b. 右下角：印章「佛光人間」(120x120 仿實體篆刻印章)
       const sealX = 860;
       const sealY = 1710;
       ctx.fillStyle = "#b71c1c"; // 大紅硃砂色
@@ -913,6 +950,20 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* 節慶互動開場模組觸發按鈕（僅管理員模式顯示） */}
+          {isAdminMode && (
+            <button
+              type="button"
+              onClick={() => setShowFestiveModal(true)}
+              className="px-3 py-2 rounded-xl bg-[#2B1D1D]/90 border-2 border-sky-300/80 flex items-center gap-1.5 text-sky-200 hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg text-xs sm:text-sm font-bold animate-pulse"
+              title="開啟觀世音菩薩成道紀念日互動開場模組"
+            >
+              <span>🪷</span>
+              <span className="hidden sm:inline">觀音成道</span>
+              <span className="sm:hidden">觀音</span>
+            </button>
+          )}
+
           {/* 診斷儀表板觸發按鈕（管理員模式下才顯示） */}
           {isAdminMode && (
             <button
@@ -1311,9 +1362,22 @@ export default function App() {
           localStorage.removeItem("xingyun_admin_mode");
           setToastMessage("已隱藏診斷按鈕（退出管理員模式）");
         }}
+        festiveKey={festiveKey}
+        onSelectFestiveKey={(key) => setFestiveKey(key)}
+        onTriggerPortal={() => setShowFestiveModal(true)}
       />
 
       <Analytics />
+
+      {/* 全螢幕節慶互動開場模組 (Festive Hero Interactive Modal) */}
+      {showFestiveModal && (
+        <FestiveHeroModal
+          festiveKey={activeFestiveKey}
+          lang={lang}
+          onComplete={handleFestiveComplete}
+          onClose={() => setShowFestiveModal(false)}
+        />
+      )}
     </div>
   );
 }

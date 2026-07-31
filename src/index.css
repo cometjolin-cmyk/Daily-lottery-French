@@ -230,4 +230,192 @@
   transform: translateY(0);
 }
 
+/* --- 7. 通用節慶模組動畫 (Festive Hero Keyframes) --- */
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.85)) drop-shadow(0 0 12px rgba(254, 240, 138, 0.6));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 45px rgba(186, 230, 253, 1)) drop-shadow(0 0 22px rgba(56, 189, 248, 0.95));
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.4s infinite ease-in-out;
+}
+
+@keyframes heroHaloPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.18) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+.animate-hero-halo {
+  animation: heroHaloPulse 3s infinite ease-in-out;
+}
+
+@keyframes goldShockwave {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+    border-width: 8px;
+    box-shadow: 0 0 30px #38bdf8, inset 0 0 30px #38bdf8;
+  }
+  50% {
+    opacity: 0.9;
+    box-shadow: 0 0 60px #38bdf8, inset 0 0 60px #38bdf8;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+    border-width: 2px;
+    box-shadow: 0 0 100px rgba(56, 189, 248, 0), inset 0 0 100px rgba(56, 189, 248, 0);
+  }
+}
+
+.animate-gold-shockwave {
+  animation: goldShockwave 0.85s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes sunburstRotate {
+  0% {
+    transform: rotate(0deg) scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(180deg) scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-sunburst {
+  animation: sunburstRotate 0.9s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes iconSuperBurst {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.8));
+  }
+  40% {
+    transform: scale(1.32);
+    filter: drop-shadow(0 0 60px rgba(224, 242, 254, 1)) brightness(1.3);
+  }
+  100% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.9));
+  }
+}
+
+.animate-icon-burst {
+  animation: iconSuperBurst 0.85s cubic-bezier(0.17, 0.89, 0.32, 1.25) forwards;
+}
+
+@keyframes spring-bounce {
+  0% {
+    transform: scale(0) translateY(50px) rotate(-10deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1) translateY(-10px) rotate(2deg);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95) translateY(5px) rotate(-1deg);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes unfold-down {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  100% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+}
+
+.animate-spring-bounce-left {
+  animation: spring-bounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-spring-bounce-right {
+  animation: spring-bounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s forwards;
+}
+
+.animate-unfold {
+  animation: unfold-down 0.6s ease-out forwards;
+}
+
+/* --- 8. 星光凝聚至 Portal Modal 登場滑順過渡動畫 (Smooth Portal Scale-In & Bloom) --- */
+@keyframes portalScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translateY(12px);
+    filter: brightness(2) blur(8px);
+  }
+  60% {
+    opacity: 0.95;
+    transform: scale(1.03) translateY(-2px);
+    filter: brightness(1.2) blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: brightness(1) blur(0px);
+  }
+}
+
+.animate-portal-scale-in {
+  animation: portalScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes backdropFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+.animate-backdrop-fade {
+  animation: backdropFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes lightFlashBloom {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.2);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.5);
+  }
+}
+
+.animate-light-bloom {
+  animation: lightFlashBloom 0.9s ease-out forwards;
+}
+
+
+
 
