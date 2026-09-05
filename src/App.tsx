@@ -108,7 +108,19 @@ export default function App() {
 
   const [lang, setLang] = useState<"zh" | "en" | "fil">("zh");
   const [showFestiveModal, setShowFestiveModal] = useState<boolean>(false);
-  const [festiveKey, setFestiveKey] = useState<string>("auto");
+  const [festiveKey, setFestiveKey] = useState<string>(() => {
+    try {
+      return localStorage.getItem("xingyun_festive_key") || "jizangBirthday";
+    } catch {
+      return "jizangBirthday";
+    }
+  });
+  const handleSelectFestiveKey = (key: string) => {
+    setFestiveKey(key);
+    try {
+      localStorage.setItem("xingyun_festive_key", key);
+    } catch {}
+  };
   const activeFestiveKey = festiveKey === "auto" ? getScheduledThemeId() : festiveKey;
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
@@ -123,6 +135,7 @@ export default function App() {
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; vx: number; vy: number; scale: number; delay: number }>>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [nebulaAnimState, setNebulaAnimState] = useState<"idle" | "condensing" | "ascending">("idle");
+  const [imgLoadError, setImgLoadError] = useState<boolean>(false);
 
   // 5 階段儀式流程抽籤邏輯 (Nebula Draw -> Festive Portal -> Scroll Unroll)
   const handleNebulaDraw = () => {
@@ -147,7 +160,9 @@ export default function App() {
     // 4. 階段 3：1100ms 凝縮光芒頂點爆發，若非原始(無節日)主題則進入全螢幕節慶 Portal，否則直接開啟解籤卷軸
     setTimeout(() => {
       setNebulaAnimState("idle");
-      if (activeFestiveKey === "original") {
+      // 4. 階段 3：1100ms 凝縮光芒頂點爆發，若為無主題(或無設定圖示與影片)則直接開啟解籤卷軸，否則進入全螢幕節慶 Portal
+      const currentTheme = FESTIVE_CONFIGS[activeFestiveKey];
+      if (activeFestiveKey === "original" || (!currentTheme?.heroIconUrl && !currentTheme?.heroVideoUrl)) {
         setShowModal(true);
         setIsScrollUnrolled(false);
         playZenReveal();
@@ -381,6 +396,7 @@ export default function App() {
       setLuckyScrollFlying(false);
       setParticles([]);
       setSelectedChit(luckyChit);
+      setImgLoadError(false);
       setShowModal(true);
       setIsScrollUnrolled(false); // 確保開頭為收攏狀態
       playZenReveal();
@@ -950,17 +966,17 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* 節慶互動開場模組觸發按鈕（僅管理員模式顯示） */}
-          {isAdminMode && (
+          {/* 節慶互動開場模組觸發按鈕（僅管理員模式且有設定節慶聖像時顯示） */}
+          {isAdminMode && !!FESTIVE_CONFIGS[activeFestiveKey]?.heroIconUrl && (
             <button
               type="button"
               onClick={() => setShowFestiveModal(true)}
               className="px-3 py-2 rounded-xl bg-[#2B1D1D]/90 border-2 border-sky-300/80 flex items-center gap-1.5 text-sky-200 hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg text-xs sm:text-sm font-bold animate-pulse"
-              title="開啟觀世音菩薩成道紀念日互動開場模組"
+              title={`開啟 ${FESTIVE_CONFIGS[activeFestiveKey]?.name || "節慶"} 互動開場模組`}
             >
               <span>🪷</span>
-              <span className="hidden sm:inline">觀音成道</span>
-              <span className="sm:hidden">觀音</span>
+              <span className="hidden sm:inline">{FESTIVE_CONFIGS[activeFestiveKey]?.name?.split(" ")[0] || "節慶"}</span>
+              <span className="sm:hidden">節慶</span>
             </button>
           )}
 
@@ -1136,32 +1152,60 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 宣紙中的 2D 圖片 (帶有古樸印章風格放大鏡提示，自然優雅) */}
+                  {/* 宣紙中的 2D 圖片 (帶有古樸印章風格放大鏡提示，自然優雅；支援 Drive 權限異常之禪意降級顯示) */}
                   <div 
-                    onClick={() => setEnlargedImgUrl(selectedChit.image_url)}
+                    onClick={() => !imgLoadError && setEnlargedImgUrl(selectedChit.image_url)}
                     className="w-full max-w-[350px] mx-auto my-2 overflow-hidden rounded-xl border border-[#BD9A7A] hover:border-[#8C241C] bg-[#FCF9F2] shadow-[0_4px_16px_rgba(140,36,28,0.12)] hover:shadow-xl relative p-0.5 flex items-center justify-center cursor-pointer group transition-all duration-300 active:scale-[0.98]"
                     style={{ 
                       aspectRatio: '6 / 5',
                     }}
                     title={lang === "zh" ? "點擊查看滿版大圖" : lang === "fil" ? "I-click para Palakihin" : "Click to view enlarged image"}
                   >
-                    <img
-                      id="result-image"
-                      src={selectedChit.image_url}
-                      alt="Zen Wisdom"
-                      className="w-full h-full object-contain select-none transition-transform duration-300 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
-                    />
+                    {!imgLoadError ? (
+                      <img
+                        id="result-image"
+                        src={selectedChit.image_url}
+                        alt="Zen Wisdom"
+                        className="w-full h-full object-contain select-none transition-transform duration-300 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                        onError={() => setImgLoadError(true)}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-[#FAF4EA] to-[#F3E8D3] select-none">
+                        <div className="w-12 h-12 rounded-full border border-[#D4AF37]/50 bg-[#8C241C]/10 flex items-center justify-center text-[#8C241C] mb-2 shadow-inner">
+                          <i className="fa-solid fa-dharmachakra text-xl animate-spin-slow"></i>
+                        </div>
+                        <div className="font-serif font-bold text-[#8C241C] text-sm mb-1 tracking-wider">
+                          {lang === "zh" ? "• 佛光法籤 •" : "• Dharma Wisdom •"}
+                        </div>
+                        <div className="text-[11px] text-stone-600 max-w-[240px] leading-relaxed mb-2 font-serif">
+                          {lang === "zh"
+                            ? "雲端硬碟圖片未開啟公開檢視或受 Google 防外連保護"
+                            : "Image requires Google Drive public sharing permissions"}
+                        </div>
+                        <a
+                          href={selectedChit.image_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-[#8C241C] text-amber-100 hover:bg-[#A32A20] transition-colors shadow-sm"
+                        >
+                          <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                          <span>{lang === "zh" ? "在雲端檢視此圖" : "View on Drive"}</span>
+                        </a>
+                      </div>
+                    )}
                     <div className="absolute top-1.5 right-2 text-[10px] tracking-widest uppercase font-mono text-[#2B1D1D] font-bold bg-[#FDF8EB]/90 px-2 py-0.5 rounded border border-[#BD9A7A]/40 shadow-sm z-10">
                       CHIT #{selectedChit.id}
                     </div>
 
                     {/* 古樸印章風格放大提示膠囊標籤 (Refined Zen Zoom Badge) */}
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#FDF8EB]/90 hover:bg-[#FDF8EB] text-[#8C241C] text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full border border-[#8C241C]/60 shadow-md flex items-center gap-1.5 backdrop-blur-sm transition-all duration-200 group-hover:scale-105 z-10">
-                      <i className="fa-solid fa-magnifying-glass-plus text-[#8C241C] text-xs"></i>
-                      <span>{lang === "zh" ? "點擊看大圖" : lang === "fil" ? "I-click para Palakihin" : "Click to Enlarge"}</span>
-                    </div>
+                    {!imgLoadError && (
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#FDF8EB]/90 hover:bg-[#FDF8EB] text-[#8C241C] text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full border border-[#8C241C]/60 shadow-md flex items-center gap-1.5 backdrop-blur-sm transition-all duration-200 group-hover:scale-105 z-10">
+                        <i className="fa-solid fa-magnifying-glass-plus text-[#8C241C] text-xs"></i>
+                        <span>{lang === "zh" ? "點擊看大圖" : lang === "fil" ? "I-click para Palakihin" : "Click to Enlarge"}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* 籤詩與法語內容 (濃墨黑 #1A1A1A，極致高對比、行高 1.8 與自然斷句保護) */}
@@ -1315,7 +1359,6 @@ export default function App() {
                 alt="Enlarged Zen Wisdom Artwork"
                 className="w-[90vw] max-w-[800px] max-h-[80vh] sm:max-h-[84vh] object-contain rounded-2xl shadow-[0_16px_50px_rgba(0,0,0,0.9)] border-2 border-[#E2C792] bg-[#140C0A]"
                 referrerPolicy="no-referrer"
-                crossOrigin="anonymous"
               />
             </div>
 
@@ -1363,7 +1406,7 @@ export default function App() {
           setToastMessage("已隱藏診斷按鈕（退出管理員模式）");
         }}
         festiveKey={festiveKey}
-        onSelectFestiveKey={(key) => setFestiveKey(key)}
+        onSelectFestiveKey={handleSelectFestiveKey}
         onTriggerPortal={() => setShowFestiveModal(true)}
       />
 

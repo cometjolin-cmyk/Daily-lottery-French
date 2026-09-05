@@ -8,6 +8,7 @@ export interface Chit {
   image_url: string;
   chinese: string;
   interpretation?: string;
+  french?: string;
   filipino?: string;
   english?: string;
   englishInterpretation?: string;

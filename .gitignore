@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 !.env.example
+*.tar.gz
+*.zip
+*.traineddata
+aug_images/
+oct_images/
+folder*.html
+drive_folder.html
+

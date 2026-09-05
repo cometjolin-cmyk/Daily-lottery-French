@@ -205,3 +205,41 @@ export async function fetchChitsFromSheet(rawIdOrUrl: string): Promise<SheetData
     };
   }
 }
+
+/**
+ * 將法籤陣列轉為可直接貼上 Google Sheets 的 TSV (Tab-Separated) 格式
+ */
+export function exportChitsToTSV(chits: any[]): string {
+  const headers = [
+    "id",
+    "chinese",
+    "interpretation",
+    "english",
+    "englishInterpretation",
+    "filipino",
+    "filipinoInterpretation",
+    "image_url",
+    "status"
+  ];
+
+  const escapeCell = (val: string | undefined | null) => {
+    if (!val) return "";
+    // 移除不必要的跳行或統一轉為單行/保留乾淨字串
+    return val.replace(/\r?\n/g, " ").replace(/\t/g, " ");
+  };
+
+  const rows = chits.map((c) => [
+    c.id || "",
+    escapeCell(c.chinese),
+    escapeCell(c.interpretation),
+    escapeCell(c.english),
+    escapeCell(c.englishInterpretation),
+    escapeCell(c.filipino),
+    escapeCell(c.filipinoInterpretation),
+    escapeCell(c.image_url),
+    c.status || "published"
+  ]);
+
+  return [headers.join("\t"), ...rows.map((r) => r.join("\t"))].join("\n");
+}
+

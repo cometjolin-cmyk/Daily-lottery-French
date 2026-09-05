@@ -416,6 +416,49 @@
   animation: lightFlashBloom 0.9s ease-out forwards;
 }
 
+/* --- 10. 🌟 古典黑酸枝／黃花梨沉香木質神龕框 (Heritage Wooden Shrine Frame) --- */
+.wood-shrine-frame {
+  background: linear-gradient(145deg, #422015 0%, #2A130B 25%, #180905 50%, #2F160C 75%, #4A2417 100%);
+  border: 3px solid #8C552A;
+  box-shadow:
+    inset 0 2px 4px rgba(255, 235, 190, 0.25),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.8),
+    0 25px 50px -12px rgba(0, 0, 0, 0.95),
+    0 0 35px rgba(180, 83, 9, 0.35);
+  position: relative;
+}
+
+.wood-shrine-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.16;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    92deg,
+    transparent 0px,
+    transparent 4px,
+    rgba(255, 215, 140, 0.3) 4px,
+    rgba(255, 215, 140, 0.3) 5px,
+    transparent 5px,
+    transparent 12px,
+    rgba(70, 30, 15, 0.4) 12px,
+    rgba(70, 30, 15, 0.4) 14px
+  );
+  mix-blend-mode: overlay;
+}
+
+.wood-inner-bevel {
+  background: linear-gradient(to bottom, #140704 0%, #0A0302 100%);
+  box-shadow:
+    inset 0 5px 15px rgba(0, 0, 0, 0.95),
+    inset 0 0 8px rgba(0, 0, 0, 0.8),
+    0 1px 2px rgba(217, 119, 6, 0.3);
+  border: 1.5px solid rgba(180, 83, 9, 0.6);
+}
+
+
 
 
 
