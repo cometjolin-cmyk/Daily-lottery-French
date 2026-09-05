@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { Volume2, VolumeX } from "lucide-react";
 import { FESTIVE_CONFIGS, FestiveTheme, formatGoogleDriveUrl } from "../config/festiveConfig";
+import { playSparkle, playCelebration, unlockAudio } from "../utils/audio";
 
 export interface FestiveHeroModalProps {
   festiveKey?: string;
   lang?: "zh" | "en" | "fil";
   customConfig?: Partial<FestiveTheme>;
+  initialMuted?: boolean;
   onComplete?: () => void;
   onClose?: () => void;
 }
@@ -27,6 +29,7 @@ export const FestiveHeroModal: React.FC<FestiveHeroModalProps> = ({
   festiveKey = "guanyinEnlightenment",
   lang = "zh",
   customConfig,
+  initialMuted = false,
   onComplete,
   onClose,
 }) => {
@@ -52,7 +55,7 @@ export const FestiveHeroModal: React.FC<FestiveHeroModalProps> = ({
   const [isBursting, setIsBursting] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(initialMuted);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -193,71 +196,14 @@ export const FestiveHeroModal: React.FC<FestiveHeroModalProps> = ({
 
   // B. Web Audio API 音效合成器 (模擬九環錫杖脆響與空靈頌缽深鳴)
   const playSparkleSound = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-
-      // 1. 九環錫杖清脆金屬微鳴 (環珮玲瓏)
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      const baseFreq = config.sparkleFreqBase || 587.33;
-      osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.65, ctx.currentTime + 0.15);
-
-      gain.gain.setValueAtTime(0.14, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.35);
-
-      // 2. 空靈頌缽與引磬泛音 (Singing Bowl Resonance)
-      const bowlOsc = ctx.createOscillator();
-      const bowlGain = ctx.createGain();
-      bowlOsc.type = "triangle";
-      bowlOsc.frequency.setValueAtTime(baseFreq * 1.5, ctx.currentTime);
-      bowlGain.gain.setValueAtTime(0.07, ctx.currentTime);
-      bowlGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.65);
-
-      bowlOsc.connect(bowlGain);
-      bowlGain.connect(ctx.destination);
-      bowlOsc.start();
-      bowlOsc.stop(ctx.currentTime + 0.65);
-    } catch {
-      // Audio fallback
-    }
-  }, [config.sparkleFreqBase]);
+    unlockAudio();
+    playSparkle(config.sparkleFreqBase || 587.33, isMuted);
+  }, [config.sparkleFreqBase, isMuted]);
 
   const playCelebrationChord = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const chords = config.celebrationChords || [523.25, 659.25, 783.99, 1046.5];
-
-      chords.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
-
-        gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.8);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(ctx.currentTime + idx * 0.08);
-        osc.stop(ctx.currentTime + idx * 0.08 + 0.8);
-      });
-    } catch {
-      // Audio fallback
-    }
-  }, [config.celebrationChords]);
+    unlockAudio();
+    playCelebration(config.celebrationChords || [523.25, 659.25, 783.99, 1046.5], isMuted);
+  }, [config.celebrationChords, isMuted]);
 
   // C. 手勢互動邏輯 (點擊 / 輕抹 / 滑動 dx/dy > 30)
   const handleInteract = (clientX: number, clientY: number) => {
@@ -483,9 +429,11 @@ export const FestiveHeroModal: React.FC<FestiveHeroModalProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setIsMuted((prev) => !prev);
+                        unlockAudio();
+                        const nextMuted = !isMuted;
+                        setIsMuted(nextMuted);
                         if (videoRef.current) {
-                          videoRef.current.muted = !isMuted;
+                          videoRef.current.muted = nextMuted;
                         }
                       }}
                       className="absolute top-3 right-3 z-35 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-stone-950/90 hover:bg-stone-900 border-2 border-amber-400/80 hover:border-amber-300 text-amber-200 shadow-[0_4px_16px_rgba(0,0,0,0.85),0_0_12px_rgba(245,158,11,0.3)] backdrop-blur-md transition-all flex items-center justify-center cursor-pointer active:scale-90"

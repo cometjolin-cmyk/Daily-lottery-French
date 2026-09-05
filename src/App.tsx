@@ -13,6 +13,7 @@ import { AdminDrawer } from "./components/AdminDrawer";
 import { fetchChitsFromSheet, DEFAULT_SPREADSHEET_ID } from "./services/sheets";
 import { FestiveHeroModal } from "./components/FestiveHeroModal";
 import { FESTIVE_CONFIGS, getScheduledThemeId } from "./config/festiveConfig";
+import { playZenRevealSound, playSingingBowl, unlockAudio } from "./utils/audio";
 
 interface ScrollData {
   id: number;
@@ -105,6 +106,23 @@ export default function App() {
   useEffect(() => {
     loadSheetData(spreadsheetId, false);
   }, [spreadsheetId, loadSheetData]);
+
+  // 註冊全域單次手勢監聽，確保在 iOS Safari / Chrome / Android 上第一時間解鎖音效引擎
+  useEffect(() => {
+    const handleFirstUserInteraction = () => {
+      unlockAudio();
+      window.removeEventListener("click", handleFirstUserInteraction);
+      window.removeEventListener("touchstart", handleFirstUserInteraction);
+    };
+
+    window.addEventListener("click", handleFirstUserInteraction, { once: true });
+    window.addEventListener("touchstart", handleFirstUserInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("click", handleFirstUserInteraction);
+      window.removeEventListener("touchstart", handleFirstUserInteraction);
+    };
+  }, []);
 
   const [lang, setLang] = useState<"zh" | "en" | "fil">("zh");
   const [showFestiveModal, setShowFestiveModal] = useState<boolean>(false);
@@ -342,34 +360,8 @@ export default function App() {
 
   // 揭示籤詩的和弦與佛堂大磬/頌缽深鳴聲 (Singing Bowl Bowl deep bloom)
   const playZenReveal = () => {
-    if (isMuted) return;
-    try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const audioCtx = new AudioContextClass();
-      const now = audioCtx.currentTime;
-      
-      const freqs = [144.0, 288.5, 433.0, 578.0, 866.0];
-      freqs.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now);
-        
-        const volume = idx === 0 ? 0.2 : 0.08 / idx;
-        gainNode.gain.setValueAtTime(volume, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
-        
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        osc.start(now);
-        osc.stop(now + 2.0);
-      });
-    } catch (err) {
-      console.warn("Reveal sound fail:", err);
-    }
+    unlockAudio();
+    playZenRevealSound(isMuted);
   };
 
 
@@ -998,7 +990,10 @@ export default function App() {
           {/* 靜音控制按鈕 */}
           <button
             id="mute-btn"
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={() => {
+              unlockAudio();
+              setIsMuted(!isMuted);
+            }}
             className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#2B1D1D]/80 border-2 border-[#E2C792] flex items-center justify-center text-[#E2C792] hover:text-white hover:bg-[#3E2723] transition-all duration-300 cursor-pointer shadow-lg"
             title={isMuted ? "開啟音效" : "靜音模式"}
           >
@@ -1417,6 +1412,7 @@ export default function App() {
         <FestiveHeroModal
           festiveKey={activeFestiveKey}
           lang={lang}
+          initialMuted={isMuted}
           onComplete={handleFestiveComplete}
           onClose={() => setShowFestiveModal(false)}
         />

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from "react";
+import { playSingingBowl, unlockAudio } from "../utils/audio";
 
 interface ParticleNebulaCanvasProps {
   isMuted: boolean;
@@ -82,52 +83,8 @@ export const ParticleNebulaCanvas: React.FC<ParticleNebulaCanvasProps> = ({
 
   // Web Audio API - Deep Resonant Singing Bowl Sound (頌缽聲 / 磬聲)
   const playSingingBowlSound = useCallback(() => {
-    if (isMuted) return;
-    try {
-      const AudioContextClass =
-        window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
-      const now = ctx.currentTime;
-
-      // Authentic singing bowl harmonics (432Hz scale base)
-      const partials = [
-        { freq: 216, gain: 0.35, decay: 3.5 },
-        { freq: 432, gain: 0.28, decay: 3.0 },
-        { freq: 576, gain: 0.18, decay: 2.4 },
-        { freq: 864, gain: 0.12, decay: 1.8 },
-        { freq: 1296, gain: 0.08, decay: 1.2 },
-      ];
-
-      // Subtle vibrato LFO (5.2 Hz gentle pulsation)
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.frequency.value = 5.2;
-      lfoGain.gain.value = 6.0;
-      lfo.start(now);
-
-      partials.forEach((p) => {
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(p.freq, now);
-        lfo.connect(osc.frequency);
-
-        // Smooth attack & long exponential decay
-        gainNode.gain.setValueAtTime(0.001, now);
-        gainNode.gain.linearRampToValueAtTime(p.gain, now + 0.06);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + p.decay);
-
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + p.decay + 0.1);
-      });
-    } catch (err) {
-      console.warn("Singing bowl audio warning:", err);
-    }
+    unlockAudio();
+    playSingingBowl(isMuted);
   }, [isMuted]);
 
   // Initialize 280 3D Sphere Particles
