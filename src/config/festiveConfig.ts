@@ -66,7 +66,7 @@ export const FESTIVE_CONFIGS: Record<string, FestiveTheme> = {
     nameEn: "Guanyin Bodhisattva's Enlightenment Day",
     nameFil: "Kaarawan ng Pagkakaliwanag ni Guanyin Bodhisattva",
     startDate: "07-15 00:00",
-    endDate: "08-31 23:59",
+    endDate: "08-11 23:59",
     heroIconUrl: "https://lh3.googleusercontent.com/d/1cOuKbewg_I6qoUwLh3EqIKv2A_Sap2XI",
     particleColors: ["#FEF3C7", "#FDE047", "#F59E0B", "#D97706", "#FEF08A", "#FB923C", "#FFFFFF"],
     glowColor: "rgba(245, 158, 11, 0.55)",
@@ -215,13 +215,13 @@ export const FESTIVE_CONFIGS: Record<string, FestiveTheme> = {
     celebrationChords: [440.00, 554.37, 659.25, 880.00],
   },
 
-  // 🏮 地藏王菩薩聖誕當天 (農曆七月廿九 / 國曆 09-10)
+  // 🏮 地藏王菩薩聖誕當天 (農曆七月廿九正日 / 國曆 09-10)
   jizangBirthday: {
     id: "jizangBirthday",
     name: "地藏王菩薩聖誕 (正日)",
     nameEn: "Ksitigarbha Bodhisattva's Birthday",
     nameFil: "Kaarawan ni Ksitigarbha Bodhisattva",
-    startDate: "09-10",
+    startDate: "09-10 00:00",
     endDate: "09-10 23:59",
     heroIconUrl: "https://lh3.googleusercontent.com/d/1l_S7fKQL1cqh7DnLju77V4BQ3AYqLVDe",
     heroVideoUrl: "/videos/jizang_birthday.mp4", // 內建高畫質仰角微距巡禮影片，支援自動循環播放與 Google Drive 直連網址替換
@@ -241,14 +241,14 @@ export const FESTIVE_CONFIGS: Record<string, FestiveTheme> = {
     celebrationChords: [349.23, 440.0, 523.25, 698.46],
   },
 
-  // 🏮 地藏王菩薩孝親月 (農曆八月整月慶期 / 國曆 09-11 ~ 10-09)
+  // 🏮 地藏王菩薩聖誕慶期 (孝親月 / 國曆 08-12 ~ 09-10)
   jizangMonth: {
     id: "jizangMonth",
     name: "地藏王菩薩聖誕慶期 (孝親月)",
     nameEn: "Ksitigarbha Filial Piety Month",
     nameFil: "Buwan ng Paggunita kay Ksitigarbha",
-    startDate: "09-11",
-    endDate: "10-09",
+    startDate: "08-12 00:00",
+    endDate: "09-10 23:59",
     heroIconUrl: "https://lh3.googleusercontent.com/d/11vKXvOsss3gXT6waK4bG5K6MCWTu7SGu",
     particleColors: ["#FEF08A", "#F59E0B", "#B45309", "#FFFFFF"],
     glowColor: "rgba(245, 158, 11, 0.5)",
