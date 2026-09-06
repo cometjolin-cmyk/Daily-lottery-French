@@ -241,14 +241,14 @@ export const FESTIVE_CONFIGS: Record<string, FestiveTheme> = {
     celebrationChords: [349.23, 440.0, 523.25, 698.46],
   },
 
-  // 🏮 地藏王菩薩聖誕慶期 (孝親月 / 國曆 08-12 ~ 09-10)
+  // 🏮 地藏王菩薩聖誕慶期 (孝親月 / 國曆 08-12 ~ 09-09)
   jizangMonth: {
     id: "jizangMonth",
     name: "地藏王菩薩聖誕慶期 (孝親月)",
     nameEn: "Ksitigarbha Filial Piety Month",
     nameFil: "Buwan ng Paggunita kay Ksitigarbha",
     startDate: "08-12 00:00",
-    endDate: "09-10 23:59",
+    endDate: "09-09 23:59",
     heroIconUrl: "https://lh3.googleusercontent.com/d/11vKXvOsss3gXT6waK4bG5K6MCWTu7SGu",
     particleColors: ["#FEF08A", "#F59E0B", "#B45309", "#FFFFFF"],
     glowColor: "rgba(245, 158, 11, 0.5)",
