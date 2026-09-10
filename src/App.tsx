@@ -128,9 +128,9 @@ export default function App() {
   const [showFestiveModal, setShowFestiveModal] = useState<boolean>(false);
   const [festiveKey, setFestiveKey] = useState<string>(() => {
     try {
-      return localStorage.getItem("xingyun_festive_key") || "auto";
+      return localStorage.getItem("xingyun_festive_key") || "jizangBirthday";
     } catch {
-      return "auto";
+      return "jizangBirthday";
     }
   });
   const handleSelectFestiveKey = (key: string) => {
